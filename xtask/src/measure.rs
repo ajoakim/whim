@@ -153,18 +153,43 @@ struct Sample {
     backend: Option<String>,
 }
 
-/// Spawn one run; Err(msg) on launch failure. The child is returned still alive.
-fn launch(o: &Opts, bin: &PathBuf, file: &PathBuf) -> Result<(Child, Sample), String> {
+/// Owns the child; kills and reaps it on every exit path (early return, `?`, panic).
+struct ChildGuard(Child);
+
+impl std::ops::Deref for ChildGuard {
+    type Target = Child;
+    fn deref(&self) -> &Child {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for ChildGuard {
+    fn deref_mut(&mut self) -> &mut Child {
+        &mut self.0
+    }
+}
+
+impl Drop for ChildGuard {
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
+
+/// Spawn one run; Err(msg) on launch failure. The child is returned still alive, guarded.
+fn launch(o: &Opts, bin: &PathBuf, file: &PathBuf) -> Result<(ChildGuard, Sample), String> {
     let exit_after = (o.idle_secs + o.timeout_secs + 5).to_string();
     let spawn_us = now_us();
-    let mut child = Command::new(bin)
-        .arg(file)
-        .args(["--bench", "--bench-exit-after", &exit_after])
-        .args(&o.extra)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("could not spawn {}: {e}", bin.display()))?;
+    let mut child = ChildGuard(
+        Command::new(bin)
+            .arg(file)
+            .args(["--bench", "--bench-exit-after", &exit_after])
+            .args(&o.extra)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| format!("could not spawn {}: {e}", bin.display()))?,
+    );
     let (tx, rx) = mpsc::channel::<String>();
     let stdout = child.stdout.take().expect("piped stdout");
     std::thread::spawn(move || {
@@ -208,6 +233,7 @@ fn launch(o: &Opts, bin: &PathBuf, file: &PathBuf) -> Result<(Child, Sample), St
                 }
             }
             Err(e) => {
+                // Kill first so the stderr reader sees EOF; the guard reaps on return.
                 let _ = child.kill();
                 let _ = child.wait();
                 std::thread::sleep(Duration::from_millis(100));
@@ -402,8 +428,6 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
             let pid = Pid::from_u32(child.id());
             let Ok(mut sys) = System::new() else {
                 eprintln!("error: sysinfo could not initialise");
-                let _ = child.kill();
-                let _ = child.wait();
                 return ExitCode::from(2);
             };
             // Settled window: wait until +SETTLE_START_SECS after launch, then sample
@@ -468,8 +492,6 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
             }
             if let Some(why) = window_problem(&win_fp, child_exited) {
                 eprintln!("error: {why}; refusing to report a passing result");
-                let _ = child.kill();
-                let _ = child.wait();
                 return ExitCode::from(2);
             }
             idle_rss = window_min(&win_rss);
@@ -483,8 +505,7 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
                 idle_cpu = l.saturating_sub(f) as f64 / (secs * 1000.0) * 100.0;
             }
         }
-        let _ = child.kill();
-        let _ = child.wait();
+        drop(child);
     }
 
     let first_run = totals[0];
