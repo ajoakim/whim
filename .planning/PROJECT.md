@@ -1,4 +1,4 @@
-# FastNotes
+# Whim
 
 ## What This Is
 
@@ -39,7 +39,7 @@ Any file, of any size, opens instantly and can be viewed and edited without the 
 **Opening files**
 - [ ] Drag & drop files onto the window
 - [ ] "Open with" / registerable as default app for file types
-- [ ] CLI: `fastnotes <file>` opens the file
+- [ ] CLI: `whim <file>` opens the file
 - [ ] Recent files list and restore last session's tabs
 
 **Performance / footprint**

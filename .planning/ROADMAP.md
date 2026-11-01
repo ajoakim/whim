@@ -1,8 +1,8 @@
-# Roadmap: FastNotes
+# Roadmap: Whim
 
 ## Overview
 
-FastNotes is built core-first. Phase 1 is a gate: it proves the toolkit and footprint claims (startup, RAM, size, HiDPI, IME) before anything else depends on them. Phases 2-4 then prove the Core Value: instant, read-only text and hex viewing of tens-of-GB files, then editing, then a trustworthy save pipeline. Phase 5 adds encodings, tabs and file-change safety. Phase 6 adds streaming search and tail mode. Phase 7 adds the leaf features (highlighting, Markdown). Phase 8 finishes OS integration, session, preferences and release packaging. Footprint budgets (PERF-01/02/03) are a standing gate re-checked in every phase, not just where they are first assigned.
+Whim is built core-first. Phase 1 is a gate: it proves the toolkit and footprint claims (startup, RAM, size, HiDPI, IME) before anything else depends on them. Phases 2-4 then prove the Core Value: instant, read-only text and hex viewing of tens-of-GB files, then editing, then a trustworthy save pipeline. Phase 5 adds encodings, tabs and file-change safety. Phase 6 adds streaming search and tail mode. Phase 7 adds the leaf features (highlighting, Markdown). Phase 8 finishes OS integration, session, preferences and release packaging. Footprint budgets (PERF-01/02/03) are a standing gate re-checked in every phase, not just where they are first assigned.
 
 ## Phases
 
@@ -113,12 +113,12 @@ FastNotes is built core-first. Phase 1 is a gate: it proves the toolkit and foot
 **UI hint**: yes
 
 ### Phase 8: OS Integration, Preferences & Release
-**Goal**: FastNotes behaves as a default file-opening app on all three OSes, remembers the user's session and preferences, and ships as small portable builds
+**Goal**: Whim behaves as a default file-opening app on all three OSes, remembers the user's session and preferences, and ships as small portable builds
 **Depends on**: Phase 5
 **Requirements**: OPEN-02, OPEN-03, OPEN-04, OPEN-05, OPEN-06, OPEN-07, UI-02, UI-03, PERF-03, PERF-04
 **Success Criteria** (what must be TRUE):
-  1. User can open files by dragging them onto the window or running `fastnotes <file>`, and a second launch adds a tab to the running window
-  2. User can register FastNotes for "Open with" / file associations on Windows, Linux and macOS, and double-clicking an associated file opens it
+  1. User can open files by dragging them onto the window or running `whim <file>`, and a second launch adds a tab to the running window
+  2. User can register Whim for "Open with" / file associations on Windows, Linux and macOS, and double-clicking an associated file opens it
   3. User can reopen files from a recent-files list, and the last session's tabs and scroll positions are restored on launch
   4. User can choose light, dark or OS theme, pick editor font and size, and zoom
   5. Windows and Linux ship as a single portable binary under about 15 MB with no installer, and macOS ships as an unsigned `.app` bundle, with a final footprint audit passing

@@ -1,13 +1,13 @@
 # Project Research Summary
 
-**Project:** FastNotes
+**Project:** Whim
 **Domain:** Lightweight cross-platform desktop text and hex editor with a Markdown view, built for tens-of-GB files (Rust)
 **Researched:** 2026-10-31
 **Confidence:** MEDIUM. Crate versions were checked on crates.io. Nearly all claims about behavior, binary size, startup and OS integration come from training knowledge and are unverified.
 
 ## Executive Summary
 
-FastNotes fills a gap. klogg and HxD open huge files instantly but are read-only or byte-only. Notepad++ and Sublime edit fully but load the whole file. The proven design is a byte-oriented, GUI-agnostic core:
+Whim fills a gap. klogg and HxD open huge files instantly but are read-only or byte-only. Notepad++ and Sublime edit fully but load the whole file. The proven design is a byte-oriented, GUI-agnostic core:
 - a read-only `ByteSource` (mmap by default)
 - a balanced-tree piece table with an append-only add buffer
 - a sparse line index built in the background

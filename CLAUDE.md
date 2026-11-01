@@ -1,7 +1,7 @@
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
-**FastNotes**
+**Whim**
 
 A small, lightweight, cross-platform desktop file editor in the spirit of Notepad++, with a built-in Markdown renderer and hex view/byte editing. It is meant to be the user's go-to app for quickly opening and viewing (and editing) files — especially downloaded files and very large files (tens of GB) that conventional editors choke on.
 
@@ -80,7 +80,7 @@ A small, lightweight, cross-platform desktop file editor in the spirit of Notepa
 | serde + serde_json | 1.0.229 / 1.0.154 | Config, recent files, session (tabs, scroll, caret) | One format for all persisted state. Use `toml` 1.1.8 only if you want human-edited config. Write atomically (temp + rename). | HIGH |
 | winreg | 0.5x (verify) | Windows file association | Register `HKCU\Software\Classes` keys at runtime from a menu item ("Set as default for ..."). This needs no installer or admin rights and suits a portable exe. Windows 10+ still requires the user to confirm the default app in Settings; you can only register as a candidate and open the Settings page. | MEDIUM |
 - **Windows**: Registry ProgId entries under HKCU (above); the OS passes the path as argv[1]. Set `#![windows_subsystem = "windows"]` (no console) and embed the icon/manifest (`embed-resource` or `winresource` build dep).
-- **Linux**: Ship a `.desktop` file with `MimeType=` and `Exec=fastnotes %F`. A "portable" single binary cannot self-register without writing to `~/.local/share/applications` (can do on request).
+- **Linux**: Ship a `.desktop` file with `MimeType=` and `Exec=whim %F`. A "portable" single binary cannot self-register without writing to `~/.local/share/applications` (can do on request).
 - **macOS**: Requires an `.app` bundle with `CFBundleDocumentTypes` in Info.plist. Files opened from Finder or the Dock arrive as Apple Events (`application:openURLs:`), **not argv**. winit 0.30 does not surface this event cleanly. Plan for a small `objc2` delegate hook or a newer winit. This is the highest-risk integration item (LOW confidence). Package with `cargo-packager` or `cargo-bundle`. "Single portable binary" on macOS in practice means a single `.app`.
 ### Infrastructure / Release
 - Add `-C target-cpu` only for local builds. Do not ship `native`.

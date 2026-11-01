@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Project:** FastNotes (lightweight text + hex editor, tens-of-GB files)
+**Project:** Whim (lightweight text + hex editor, tens-of-GB files)
 **Researched:** 2026-10-31
 **Version source:** crates.io API queried 2026-10-31 (HIGH for "latest stable"). Architectural claims (startup, RAM, IME quality, binary size) come from training knowledge plus ecosystem experience and are MEDIUM/LOW. Each is marked, and Phase 0 must verify them with a spike.
 
@@ -95,7 +95,7 @@ No library. Custom egui painter. A hex row is 16 bytes. Draw offset column, 16 h
 
 **Per-OS file association / Open With:**
 - **Windows**: Registry ProgId entries under HKCU (above); the OS passes the path as argv[1]. Set `#![windows_subsystem = "windows"]` (no console) and embed the icon/manifest (`embed-resource` or `winresource` build dep).
-- **Linux**: Ship a `.desktop` file with `MimeType=` and `Exec=fastnotes %F`. A "portable" single binary cannot self-register without writing to `~/.local/share/applications` (can do on request).
+- **Linux**: Ship a `.desktop` file with `MimeType=` and `Exec=whim %F`. A "portable" single binary cannot self-register without writing to `~/.local/share/applications` (can do on request).
 - **macOS**: Requires an `.app` bundle with `CFBundleDocumentTypes` in Info.plist. Files opened from Finder or the Dock arrive as Apple Events (`application:openURLs:`), **not argv**. winit 0.30 does not surface this event cleanly. Plan for a small `objc2` delegate hook or a newer winit. This is the highest-risk integration item (LOW confidence). Package with `cargo-packager` or `cargo-bundle`. "Single portable binary" on macOS in practice means a single `.app`.
 
 Not needed: `notify` 8.2.1 (file watching) as a v1 requirement. It is optional for "file changed on disk" prompts, which matter with mmap (see pitfalls).

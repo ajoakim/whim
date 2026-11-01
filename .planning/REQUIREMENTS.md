@@ -1,4 +1,4 @@
-# Requirements: FastNotes
+# Requirements: Whim
 
 **Defined:** 2026-10-31
 **Core Value:** Any file, of any size, opens instantly and can be viewed and edited without the app ever loading the whole file into memory.
@@ -74,9 +74,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **OPEN-01**: User can have multiple files open in tabs, with dirty indicators and close-without-saving prompts
 - [ ] **OPEN-02**: User can open files by drag & drop onto the window
-- [ ] **OPEN-03**: User can open a file from the terminal with `fastnotes <file>`
-- [ ] **OPEN-04**: User can register FastNotes for "Open with" / file associations on Windows, Linux and macOS
-- [ ] **OPEN-05**: Opening another file while FastNotes is running adds a tab to the existing window (single instance)
+- [ ] **OPEN-03**: User can open a file from the terminal with `whim <file>`
+- [ ] **OPEN-04**: User can register Whim for "Open with" / file associations on Windows, Linux and macOS
+- [ ] **OPEN-05**: Opening another file while Whim is running adds a tab to the existing window (single instance)
 - [ ] **OPEN-06**: User can reopen recent files from a recent-files list
 - [ ] **OPEN-07**: Last session's tabs (and scroll positions) are restored on launch
 - [ ] **OPEN-08**: User can follow a growing file (tail mode) so new lines appear and auto-scroll
