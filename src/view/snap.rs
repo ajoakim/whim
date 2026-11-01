@@ -1,6 +1,17 @@
 //! Pixel snapping for crisp HiDPI rows (pure, no windowing types).
 
-// IMPL_PLACEHOLDER
+/// Round a logical coordinate to the nearest physical pixel.
+pub fn snap(v: f32, ppp: f32) -> f32 {
+    if ppp <= 0.0 {
+        return v;
+    }
+    (v * ppp).round() / ppp
+}
+
+/// Snapped y of row `i`: constant stride, each row snapped independently.
+pub fn row_y(top: f32, i: usize, row_h: f32, ppp: f32) -> f32 {
+    snap(top + i as f32 * row_h, ppp)
+}
 
 #[cfg(test)]
 mod tests {
