@@ -8,5 +8,6 @@ pub mod args;
 pub mod backend;
 pub mod bench;
 pub mod file;
+pub mod ime;
 pub mod theme;
 pub mod view;
