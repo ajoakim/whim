@@ -10,7 +10,7 @@ Whim is built core-first. Phase 1 is a gate: it proves the toolkit and footprint
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Toolkit & Footprint Gate** - Walking skeleton on all three OSes that measures startup, RAM, HiDPI and IME and decides egui vs. fallback
+- [x] **Phase 1: Toolkit & Footprint Gate** - Walking skeleton on all three OSes that measures startup, RAM, HiDPI and IME and decides egui vs. fallback (completed 2026-11-01)
 - [ ] **Phase 2: Core Storage & Read-Only Viewers** - Open any-size file instantly (File > Open, drag & drop) in virtualized text and hex views with background line index
 - [ ] **Phase 3: Editing, Undo & Hex Overwrite** - Insert/delete/replace anywhere, selection, clipboard, IME, bounded undo, byte overwrite
 - [ ] **Phase 4: Safe Save & Recovery** - Atomic, cancellable save of edited huge files, in-place patching, Save As, crash recovery journal
@@ -45,7 +45,7 @@ Plans:
 - [x] 01-04-PLAN.md — IME probe wiring (preedit/commit/IMEOutput) + glow/wgpu build and harness smoke
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 01-05-PLAN.md — Local measurements, manual IME/HiDPI/CI checkpoint, final go/no-go in 01-GATE.md
+- [x] 01-05-PLAN.md — Local measurements, manual IME/HiDPI/CI checkpoint, final go/no-go in 01-GATE.md
 **UI hint**: yes
 
 ### Phase 2: Core Storage & Read-Only Viewers
@@ -147,7 +147,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 (Ph
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Toolkit & Footprint Gate | 4/5 | In Progress|  |
+| 1. Toolkit & Footprint Gate | 5/5 | Complete   | 2026-11-01 |
 | 2. Core Storage & Read-Only Viewers | 0/TBD | Not started | - |
 | 3. Editing, Undo & Hex Overwrite | 0/TBD | Not started | - |
 | 4. Safe Save & Recovery | 0/TBD | Not started | - |
