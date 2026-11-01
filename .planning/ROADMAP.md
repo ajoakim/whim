@@ -11,13 +11,13 @@ Whim is built core-first. Phase 1 is a gate: it proves the toolkit and footprint
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [ ] **Phase 1: Toolkit & Footprint Gate** - Walking skeleton on all three OSes that measures startup, RAM, HiDPI and IME and decides egui vs. fallback
-- [ ] **Phase 2: Core Storage & Read-Only Viewers** - Open any-size file instantly in virtualized text and hex views with background line index
+- [ ] **Phase 2: Core Storage & Read-Only Viewers** - Open any-size file instantly (File > Open, drag & drop) in virtualized text and hex views with background line index
 - [ ] **Phase 3: Editing, Undo & Hex Overwrite** - Insert/delete/replace anywhere, selection, clipboard, IME, bounded undo, byte overwrite
 - [ ] **Phase 4: Safe Save & Recovery** - Atomic, cancellable save of edited huge files, in-place patching, Save As, crash recovery journal
 - [ ] **Phase 5: Encoding, Tabs & File-Change Safety** - Encoding/EOL detection and switching, multi-file tabs, external-change and truncation safety
 - [ ] **Phase 6: Search, Replace & Tail** - Streaming find/replace with regex on huge files, results list, follow-a-growing-file mode
 - [ ] **Phase 7: Syntax Highlighting & Markdown** - Viewport-only highlighting and a safe source/rendered Markdown toggle
-- [ ] **Phase 8: OS Integration, Preferences & Release** - CLI, drag and drop, single instance, file associations, session restore, themes, shippable binaries
+- [ ] **Phase 8: OS Integration, Preferences & Release** - CLI, single instance, file associations, session restore, themes, shippable binaries
 
 ## Phase Details
 
@@ -51,7 +51,7 @@ Plans:
 ### Phase 2: Core Storage & Read-Only Viewers
 **Goal**: User can open a file of any size and immediately scroll, jump and inspect it in text or hex, with the whole file never loaded into memory
 **Depends on**: Phase 1
-**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, HEX-01, HEX-03, HEX-05, UI-01, UI-05
+**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, HEX-01, HEX-03, HEX-05, UI-01, UI-05, OPEN-02, OPEN-09
 **Success Criteria** (what must be TRUE):
   1. User opens a file of tens of GB and sees its first page in under 1 second, with RAM use independent of file size
   2. User scrolls smoothly through the file immediately, before line indexing finishes, sees indexing progress in the status bar, and line numbers become exact on completion
@@ -59,6 +59,7 @@ Plans:
   4. User can open a file with a multi-GB single line (or no newlines) without a freeze, and can cancel any long background operation without the UI blocking
   5. User can view any file in a hex view (offset, hex and ASCII columns), and opening a binary file shows text with a banner offering hex, never auto-switching
   6. User can toggle line numbers and word wrap (wrap auto-disabled on huge files with a notice), and CJK text displays via font fallback; UI shows only tabs area, editor and status bar (line:col, offset, encoding, EOL, indexing progress)
+  7. User can open a file via File > Open (native dialog, Ctrl/Cmd+O) or by dragging it onto the window
 **Plans**: TBD
 **UI hint**: yes
 
@@ -129,9 +130,9 @@ Plans:
 ### Phase 8: OS Integration, Preferences & Release
 **Goal**: Whim behaves as a default file-opening app on all three OSes, remembers the user's session and preferences, and ships as small portable builds
 **Depends on**: Phase 5
-**Requirements**: OPEN-02, OPEN-03, OPEN-04, OPEN-05, OPEN-06, OPEN-07, UI-02, UI-03, PERF-03, PERF-04
+**Requirements**: OPEN-03, OPEN-04, OPEN-05, OPEN-06, OPEN-07, UI-02, UI-03, PERF-03, PERF-04
 **Success Criteria** (what must be TRUE):
-  1. User can open files by dragging them onto the window or running `whim <file>`, and a second launch adds a tab to the running window
+  1. User can open files by running `whim <file>`, and a second launch (or drag & drop / File > Open while running) adds a tab to the running window
   2. User can register Whim for "Open with" / file associations on Windows, Linux and macOS, and double-clicking an associated file opens it
   3. User can reopen files from a recent-files list, and the last session's tabs and scroll positions are restored on launch
   4. User can choose light, dark or OS theme, pick editor font and size, and zoom

@@ -80,6 +80,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **OPEN-06**: User can reopen recent files from a recent-files list
 - [ ] **OPEN-07**: Last session's tabs (and scroll positions) are restored on launch
 - [ ] **OPEN-08**: User can follow a growing file (tail mode) so new lines appear and auto-scroll
+- [ ] **OPEN-09**: User can open a file via File > Open (Ctrl/Cmd+O) using the native OS file dialog
 
 ### UI & Preferences (UI)
 
@@ -147,6 +148,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-05 | Phase 1 | Pending |
 | UI-04 | Phase 1 | Pending |
 | CORE-01 | Phase 2 | Pending |
+| OPEN-02 | Phase 2 | Pending |
+| OPEN-09 | Phase 2 | Pending |
 | CORE-02 | Phase 2 | Pending |
 | CORE-03 | Phase 2 | Pending |
 | CORE-04 | Phase 2 | Pending |
@@ -192,7 +195,6 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIEW-02 | Phase 7 | Pending |
 | VIEW-03 | Phase 7 | Pending |
 | VIEW-04 | Phase 7 | Pending |
-| OPEN-02 | Phase 8 | Pending |
 | OPEN-03 | Phase 8 | Pending |
 | OPEN-04 | Phase 8 | Pending |
 | OPEN-05 | Phase 8 | Pending |
