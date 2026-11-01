@@ -70,7 +70,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Footprint feasibility (200 ms, <15 MB, tens of MB RSS) unproven until Phase 1
+- Phase 2 MUST handle a mapped file being truncated/modified by another process (SIGBUS on Linux/macOS with panic=abort; UB for &[u8]) — deferred from Phase 1 review WR-01
+- Phase 2 replaces the 128-byte row model: fixes End key (WR-02) and non-inverse up/down scroll (WR-04) from Phase 1 review
+
+- RESOLVED (Phase 1 GO): footprint feasibility proven — 5.0 MB, ~270 ms warm, idle 59.9 MB Windows / 37.6 MB macOS (comparable metric)
 - IME and accessibility in a custom egui editor are low confidence
 - Windows mapped-file replace semantics and whether undo survives a rewriting save need a Phase 4 spike
 - macOS Apple Event file-open on winit is unknown (Phase 1 check, Phase 8 delivery)
