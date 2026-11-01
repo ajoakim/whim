@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 1 UI-SPEC approved
-last_updated: "2026-11-01T03:45:37.100Z"
+last_updated: "2026-11-01T04:03:06.039Z"
 last_activity: 2026-11-01
 progress:
   total_phases: 8
@@ -62,6 +62,7 @@ Recent decisions affecting current work:
 - Roadmap: Footprint budgets (PERF-01/02/03) are a standing gate re-checked every phase
 - Roadmap: Hex read-only view ships with the viewer (Phase 2); byte overwrite ships with editing (Phase 3)
 - Roadmap: SAVE-09 (recovery journal), OPEN-08 (tail), SRCH-03 (results list), ENC-04/05 are explicitly in v1
+- [Phase 1]: Phase 1 gate: GO on egui/eframe 0.37 + glow; idle RAM gated on comparable per-OS footprint (WS/phys_footprint/PSS), 70 MB
 
 ### Pending Todos
 

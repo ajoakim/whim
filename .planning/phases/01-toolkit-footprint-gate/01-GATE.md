@@ -1,8 +1,12 @@
 # Phase 1 Gate: egui/eframe (glow)
 
-**Verdict:** NO-GO — Slint 1.18.1 evaluation required before Phase 2
+**Verdict:** GO — egui/eframe 0.37 with glow is confirmed as the toolkit (user decision, 2026-11-01)
 
-**Basis:** applying the decision rule literally, the macOS CI runner (a NO-GO input) exceeds the 70 MB settled idle RSS budget: 102.7 MB for glow (run 41269609008, settled metric), 90.5 MB for wgpu. Windows real hardware passes everything (see Rationale). The user should review this verdict; see "Review note" under Rationale.
+**Basis:** with the comparable per-OS footprint metric (CI run 41270819589), whim is within the 70 MB idle budget on Windows real hardware (59.9 MB working set) and macOS (37.6 MB phys_footprint), adds only ~3 MB over a bare eframe window on every OS, passes size (5.0 MB) and startup (~270 ms warm median) budgets, and passed manual IME and HiDPI checks. The earlier NO-GO (macOS 102.7 MB RSS) was an artefact of counting shared framework pages. Only the two software-GL CI VMs exceed 70 MB, and the bare toolkit does too; these are not NO-GO inputs. Slint is not needed: the idle floor is toolkit + GL driver, not whim code.
+
+**Superseded:** the initial literal NO-GO (see Rationale and Review note below) is kept for the record.
+
+**Open items carried forward (non-blocking):** cold start not measured (warm-only); dragging between mixed-DPI monitors untested; macOS/Linux IME unverified; no real-hardware Linux numbers (CI only).
 
 ## Decision rule
 

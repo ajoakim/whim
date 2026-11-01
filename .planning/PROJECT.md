@@ -61,7 +61,7 @@ Any file, of any size, opens instantly and can be viewed and edited without the 
 - Primary use case: the user's default app for files they download and for large files (logs, dumps, data files) that Notepad++ and similar editors struggle with (Notepad++ degrades past a few hundred MB).
 - Equal mix of viewing and editing — editing is not an afterthought, including on huge files.
 - Greenfield project, empty repository.
-- Language choice: user asked for Rust or Go "depending on how fast and lightweight" — Rust chosen (see Key Decisions). GUI toolkit still to be chosen by research (candidates: egui/eframe, iced, Slint, native wrappers); it must hit the startup, RAM and binary-size targets and support custom-rendered virtualized text and hex views.
+- Language choice: user asked for Rust or Go "depending on how fast and lightweight" — Rust chosen (see Key Decisions). GUI toolkit: egui/eframe 0.37 with glow, confirmed by the Phase 1 gate (GO); it must keep hitting the startup, RAM and binary-size targets and support custom-rendered virtualized text and hex views.
 
 ## Constraints
 
@@ -83,7 +83,7 @@ Any file, of any size, opens instantly and can be viewed and edited without the 
 | Binary files open as text first | User preference; manual switch to hex | — Pending |
 | Minimal UI | User preference: tabs + editor + status bar | — Pending |
 | Idle RAM = settled working set, budget 70 MB (was 60) | Isolation diagnostic: the 92.8 MB figure was a ~7 s startup transient; whim settles at 57.5-58.6 MB and bare eframe at 64 MB, so the floor is toolkit + GPU driver (user decision 2026-10-31) | Adopted |
-| egui/eframe (glow) go/no-go (Phase 1 gate) | Windows: 5.0 MB, 272 ms, 59.6 MB settled pass. macOS CI runner: settled idle RSS 102.7 MB exceeds 70 MB, so the literal rule gives NO-GO; see 01-GATE.md | NO-GO per literal rule, pending user review |
+| egui/eframe (glow) go/no-go (Phase 1 gate) | Windows: 5.0 MB, 272 ms, 59.6 MB settled pass. macOS CI runner: settled idle RSS 102.7 MB exceeds 70 MB, so the literal rule gives NO-GO; see 01-GATE.md | ✓ GO (2026-11-01): comparable per-OS metric shows whim within 70 MB on Windows (59.9 MB) and macOS (37.6 MB phys_footprint), ~3 MB over bare eframe; egui/glow locked |
 
 ## Evolution
 
