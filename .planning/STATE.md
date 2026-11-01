@@ -70,6 +70,7 @@ None yet.
 
 ### Blockers/Concerns
 
+- Phase 2 setup: hard-gate macOS CI (real GL) at idle footprint <= 70 MB and startup median <= 600 ms; software-GL runners report-only (user decision 2026-11-01)
 - Phase 2 MUST handle a mapped file being truncated/modified by another process (SIGBUS on Linux/macOS with panic=abort; UB for &[u8]) — deferred from Phase 1 review WR-01
 - Phase 2 replaces the 128-byte row model: fixes End key (WR-02) and non-inverse up/down scroll (WR-04) from Phase 1 review
 

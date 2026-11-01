@@ -26,14 +26,14 @@ result: [pending]
 
 ### 4. Accept or tighten CI runtime budgets
 expected: Decide whether CI thresholds (1300 ms / 180 MB soft; size 10 MB hard) satisfy "CI enforces budgets"
-result: [pending]
+result: pass — user decision 2026-11-01: hard-gate macOS CI (real GL) at footprint <= 70 MB and startup <= 600 ms; software-GL runners stay report-only; size hard everywhere. Implement in Phase 2 setup.
 
 ## Summary
 
 total: 4
-passed: 0
+passed: 1
 issues: 0
-pending: 4
+pending: 3
 skipped: 0
 blocked: 0
 
