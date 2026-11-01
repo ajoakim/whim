@@ -88,16 +88,16 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **UI-01**: Minimal UI: tabs, editor area, status bar (line:col, byte offset, encoding, EOL, indexing progress), menus for everything else
 - [ ] **UI-02**: User can choose light or dark theme, or follow the OS
 - [ ] **UI-03**: User can choose editor font and size, and zoom
-- [ ] **UI-04**: Text is crisp on HiDPI and mixed-DPI displays
+- [x] **UI-04**: Text is crisp on HiDPI and mixed-DPI displays
 - [ ] **UI-05**: CJK text renders via font fallback (system or bundled), so IME-typed and opened CJK text is readable
 
 ### Performance & Distribution (PERF)
 
-- [ ] **PERF-01**: App window appears in about 200 ms on a cold start
-- [ ] **PERF-02**: Idle RAM is in the tens of MB and idle CPU is near zero
+- [x] **PERF-01**: App window appears in about 200 ms on a cold start
+- [x] **PERF-02**: Idle RAM is in the tens of MB and idle CPU is near zero
 - [ ] **PERF-03**: Windows and Linux ship as a single portable binary under ~15 MB, with no installer or runtime
 - [ ] **PERF-04**: macOS ships as an unsigned `.app` bundle (users open it via right-click → Open the first time)
-- [ ] **PERF-05**: Runs on Windows, Linux and macOS
+- [x] **PERF-05**: Runs on Windows, Linux and macOS
 
 ## v2 Requirements
 
@@ -144,10 +144,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | Phase 1 | Pending |
-| PERF-02 | Phase 1 | Pending |
-| PERF-05 | Phase 1 | Pending |
-| UI-04 | Phase 1 | Pending |
+| PERF-01 | Phase 1 | Complete |
+| PERF-02 | Phase 1 | Complete |
+| PERF-05 | Phase 1 | Complete |
+| UI-04 | Phase 1 | Complete |
 | CORE-01 | Phase 2 | Pending |
 | EDIT-10 | Phase 2 | Pending |
 | OPEN-02 | Phase 2 | Pending |
