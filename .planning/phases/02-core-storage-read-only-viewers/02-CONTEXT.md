@@ -44,6 +44,8 @@ User can open a file of any size (File > Open, drag & drop, CLI) and immediately
 
 - D-20: With word wrap OFF, the text view scrolls horizontally: horizontal scrollbar, Shift+wheel and Left/Right past the edge scroll sideways; width bounded by the 10k-char row cap (user decision 2026-11-01; overrides UI-SPEC draft's clip-only default).
 
+- D-21: Pull the minimal macOS `.app` bundle forward from Phase 8 (user report 2026-11-01: double-clicking the bare binary in Finder opens Terminal.app first). Add `cargo xtask bundle-macos` producing an unsigned `Whim.app` (Contents/Info.plist with CFBundleExecutable/Identifier/Name/Version, NSHighResolutionCapable=true, LSMinimumSystemVersion; Contents/MacOS/whim; icon optional). CI macOS jobs upload `Whim.app` (zipped, preserving the exec bit) as an artifact. Document in README: download, unzip, right-click > Open the first time. Phase 8 keeps file associations / CFBundleDocumentTypes / Apple Event open.
+
 ### Claude's Discretion
 - Module layout, chunk-cache size/eviction, exact estimation formula, keyboard shortcuts not listed above, banner/dialog styling within UI-SPEC.
 
