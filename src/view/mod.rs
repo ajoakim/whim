@@ -14,6 +14,8 @@ pub struct ViewState {
     visible_rows: usize,
     ime: crate::ime::ImeProbe,
     focus_requested: bool,
+    /// Set by the app while an overlay (e.g. the About window) should own the keyboard.
+    pub keys_blocked: bool,
 }
 
 impl Default for ViewState {
@@ -30,6 +32,7 @@ impl ViewState {
             visible_rows: 1,
             ime: crate::ime::ImeProbe::new(),
             focus_requested: false,
+            keys_blocked: false,
         }
     }
 
@@ -59,12 +62,14 @@ impl ViewState {
         }
         let focused = response.has_focus();
         if focused {
-            let events = ui.input(|i| i.events.clone());
-            for ev in &events {
-                if let egui::Event::Ime(ime_ev) = ev {
-                    self.ime.apply(ime_ev);
+            let ime = &mut self.ime;
+            ui.input(|i| {
+                for ev in &i.events {
+                    if let egui::Event::Ime(ime_ev) = ev {
+                        ime.apply(ime_ev);
+                    }
                 }
-            }
+            });
             if !self.ime.is_composing() && ui.input(|i| i.key_pressed(Key::Escape)) {
                 self.ime.escape();
             }
@@ -83,6 +88,10 @@ impl ViewState {
                 self.scroll_accum -= whole * rows::ROW_HEIGHT;
                 self.top = rows::scroll_rows(data, self.top, -(whole as i64));
             }
+        }
+
+        // Keyboard navigation: only with view focus and no popup/overlay claiming the keys.
+        if focused && !self.keys_blocked && !ui.ctx().any_popup_open() {
             let page = (n as i64 - 2).max(1);
             let (mut delta, mut home, mut end) = (0i64, false, false);
             // Keys belong to the IME during composition.

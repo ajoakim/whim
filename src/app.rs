@@ -135,6 +135,7 @@ impl eframe::App for WhimApp {
                 });
             });
 
+        self.view.keys_blocked = self.show_about;
         egui::CentralPanel::default()
             .frame(egui::Frame::NONE)
             .show(ui, |ui| match &self.file {
