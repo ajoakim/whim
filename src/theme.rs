@@ -22,10 +22,21 @@ pub fn apply(ctx: &egui::Context) {
     ctx.global_style_mut(|style| {
         style.spacing.item_spacing = egui::vec2(8.0, 4.0);
         style.spacing.button_padding = egui::vec2(8.0, 4.0);
-        style.text_styles.insert(TextStyle::Body, FontId::new(14.0, FontFamily::Proportional));
-        style.text_styles.insert(TextStyle::Small, FontId::new(12.0, FontFamily::Proportional));
-        style.text_styles.insert(TextStyle::Monospace, FontId::new(14.0, FontFamily::Monospace));
-        style.text_styles.insert(TextStyle::Button, FontId::new(14.0, FontFamily::Proportional));
+        style
+            .text_styles
+            .insert(TextStyle::Body, FontId::new(14.0, FontFamily::Proportional));
+        style.text_styles.insert(
+            TextStyle::Small,
+            FontId::new(12.0, FontFamily::Proportional),
+        );
+        style.text_styles.insert(
+            TextStyle::Monospace,
+            FontId::new(14.0, FontFamily::Monospace),
+        );
+        style.text_styles.insert(
+            TextStyle::Button,
+            FontId::new(14.0, FontFamily::Proportional),
+        );
     });
 
     #[cfg(feature = "bundled-mono")]

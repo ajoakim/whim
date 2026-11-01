@@ -29,7 +29,11 @@ pub fn median(v: &mut [f64]) -> f64 {
     }
     v.sort_by(|a, b| a.total_cmp(b));
     let n = v.len();
-    if n % 2 == 1 { v[n / 2] } else { (v[n / 2 - 1] + v[n / 2]) / 2.0 }
+    if n % 2 == 1 {
+        v[n / 2]
+    } else {
+        (v[n / 2 - 1] + v[n / 2]) / 2.0
+    }
 }
 
 pub fn parse_bench_line(line: &str) -> Option<(&str, &str)> {
@@ -46,7 +50,10 @@ pub fn evaluate(r: &Results, b: &Budgets) -> Vec<String> {
     if let Some(m) = b.max_startup_ms
         && r.startup_median_ms > m
     {
-        v.push(format!("median startup {:.1} ms > max {m} ms", r.startup_median_ms));
+        v.push(format!(
+            "median startup {:.1} ms > max {m} ms",
+            r.startup_median_ms
+        ));
     }
     if let Some(m) = b.max_rss_mb
         && r.idle_rss_mb > m
@@ -111,7 +118,10 @@ fn parse(args: &mut lexopt::Parser) -> Result<Option<Opts>, lexopt::Error> {
 }
 
 fn now_us() -> u128 {
-    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_micros()).unwrap_or(0)
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_micros())
+        .unwrap_or(0)
 }
 
 #[derive(Default)]
@@ -165,7 +175,9 @@ fn launch(o: &Opts, bin: &PathBuf, file: &PathBuf) -> Result<(Child, Sample), St
                         "startup_ms" => s.inapp_ms = v.parse().ok(),
                         // Contract line: `first_frame_unix_us=<u128>`
                         "first_frame_unix_us" => {
-                            let ff: u128 = v.parse().map_err(|_| format!("bad first_frame_unix_us: {v}"))?;
+                            let ff: u128 = v
+                                .parse()
+                                .map_err(|_| format!("bad first_frame_unix_us: {v}"))?;
                             s.total_ms = startup_total_ms(ff, spawn_us);
                             return Ok((child, s));
                         }
@@ -191,7 +203,11 @@ fn launch(o: &Opts, bin: &PathBuf, file: &PathBuf) -> Result<(Child, Sample), St
 fn mem_cpu(sys: &mut System, pid: Pid) -> Option<(f64, f64, u64)> {
     sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
     let p = sys.process(pid)?;
-    Some((p.memory() as f64 / MIB, p.virtual_memory() as f64 / MIB, p.accumulated_cpu_time()))
+    Some((
+        p.memory() as f64 / MIB,
+        p.virtual_memory() as f64 / MIB,
+        p.accumulated_cpu_time(),
+    ))
 }
 
 pub fn run(mut args: lexopt::Parser) -> ExitCode {
@@ -284,7 +300,11 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
     let startup_max = totals.iter().cloned().fold(0.0, f64::max);
     let inapp_median = median(&mut inapp.clone());
 
-    let results = Results { startup_median_ms: startup_median, idle_rss_mb: idle_rss, idle_cpu_pct: idle_cpu };
+    let results = Results {
+        startup_median_ms: startup_median,
+        idle_rss_mb: idle_rss,
+        idle_cpu_pct: idle_cpu,
+    };
     let violations = evaluate(&results, &o.budgets);
     let pass = violations.is_empty();
 
@@ -319,7 +339,11 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
     for v in &violations {
         println!("BUDGET FAIL: {v}");
     }
-    if pass { ExitCode::SUCCESS } else { ExitCode::from(1) }
+    if pass {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 #[cfg(test)]
@@ -334,24 +358,72 @@ mod tests {
 
     #[test]
     fn bench_line_parsing() {
-        assert_eq!(parse_bench_line("startup_ms=142"), Some(("startup_ms", "142")));
+        assert_eq!(
+            parse_bench_line("startup_ms=142"),
+            Some(("startup_ms", "142"))
+        );
         assert_eq!(parse_bench_line("garbage"), None);
     }
 
     #[test]
     fn budgets_evaluate() {
-        let b = Budgets { max_startup_ms: Some(300.0), max_rss_mb: Some(60.0), max_idle_cpu: Some(1.0) };
-        let ok = Results { startup_median_ms: 250.0, idle_rss_mb: 50.0, idle_cpu_pct: 0.5 };
+        let b = Budgets {
+            max_startup_ms: Some(300.0),
+            max_rss_mb: Some(60.0),
+            max_idle_cpu: Some(1.0),
+        };
+        let ok = Results {
+            startup_median_ms: 250.0,
+            idle_rss_mb: 50.0,
+            idle_cpu_pct: 0.5,
+        };
         assert!(evaluate(&ok, &b).is_empty());
-        assert_eq!(evaluate(&Results { startup_median_ms: 350.0, ..ok.clone() }, &b).len(), 1);
-        assert_eq!(evaluate(&Results { idle_rss_mb: 70.0, ..ok.clone() }, &b).len(), 1);
-        assert_eq!(evaluate(&Results { idle_cpu_pct: 1.5, ..ok.clone() }, &b).len(), 1);
-        let huge = Results { startup_median_ms: 1e9, idle_rss_mb: 1e9, idle_cpu_pct: 1e9 };
+        assert_eq!(
+            evaluate(
+                &Results {
+                    startup_median_ms: 350.0,
+                    ..ok.clone()
+                },
+                &b
+            )
+            .len(),
+            1
+        );
+        assert_eq!(
+            evaluate(
+                &Results {
+                    idle_rss_mb: 70.0,
+                    ..ok.clone()
+                },
+                &b
+            )
+            .len(),
+            1
+        );
+        assert_eq!(
+            evaluate(
+                &Results {
+                    idle_cpu_pct: 1.5,
+                    ..ok.clone()
+                },
+                &b
+            )
+            .len(),
+            1
+        );
+        let huge = Results {
+            startup_median_ms: 1e9,
+            idle_rss_mb: 1e9,
+            idle_cpu_pct: 1e9,
+        };
         assert!(evaluate(&huge, &Budgets::default()).is_empty());
     }
 
     #[test]
     fn startup_from_stamps() {
-        assert_eq!(startup_total_ms(1_700_000_250_000, 1_700_000_000_000), 250.0);
+        assert_eq!(
+            startup_total_ms(1_700_000_250_000, 1_700_000_000_000),
+            250.0
+        );
     }
 }

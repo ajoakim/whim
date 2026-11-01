@@ -27,7 +27,12 @@ impl WhimApp {
         if let Some(p) = ppp {
             cc.egui_ctx.set_pixels_per_point(p);
         }
-        Self { file, view: ViewState::new(), clock, show_about: false }
+        Self {
+            file,
+            view: ViewState::new(),
+            clock,
+            show_about: false,
+        }
     }
 }
 
@@ -54,19 +59,31 @@ impl eframe::App for WhimApp {
 
         egui::Panel::top("menu")
             .exact_size(24.0)
-            .frame(egui::Frame::NONE.fill(theme::SECONDARY).inner_margin(egui::Margin::symmetric(8, 0)))
+            .frame(
+                egui::Frame::NONE
+                    .fill(theme::SECONDARY)
+                    .inner_margin(egui::Margin::symmetric(8, 0)),
+            )
             .show(ui, |ui| {
                 egui::MenuBar::new().ui(ui, |ui| {
                     ui.menu_button("File", |ui| {
-                        ui.add_enabled(false, egui::Button::new("Open...").shortcut_text(open_text))
-                            .on_disabled_hover_text(SOON);
-                        if ui.add(egui::Button::new("Quit").shortcut_text(quit_text)).clicked() {
+                        ui.add_enabled(
+                            false,
+                            egui::Button::new("Open...").shortcut_text(open_text),
+                        )
+                        .on_disabled_hover_text(SOON);
+                        if ui
+                            .add(egui::Button::new("Quit").shortcut_text(quit_text))
+                            .clicked()
+                        {
                             ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                         }
                     });
                     ui.menu_button("View", |ui| {
-                        ui.add_enabled(false, egui::Button::new("Wrap lines")).on_disabled_hover_text(SOON);
-                        ui.add_enabled(false, egui::Button::new("Line numbers")).on_disabled_hover_text(SOON);
+                        ui.add_enabled(false, egui::Button::new("Wrap lines"))
+                            .on_disabled_hover_text(SOON);
+                        ui.add_enabled(false, egui::Button::new("Line numbers"))
+                            .on_disabled_hover_text(SOON);
                     });
                     ui.menu_button("Help", |ui| {
                         if ui.button("About Whim").clicked() {
@@ -82,7 +99,11 @@ impl eframe::App for WhimApp {
         let file = &self.file;
         egui::Panel::bottom("status")
             .exact_size(24.0)
-            .frame(egui::Frame::NONE.fill(theme::SECONDARY).inner_margin(egui::Margin::symmetric(8, 0)))
+            .frame(
+                egui::Frame::NONE
+                    .fill(theme::SECONDARY)
+                    .inner_margin(egui::Margin::symmetric(8, 0)),
+            )
             .show(ui, |ui| {
                 ui.horizontal_centered(|ui| {
                     match file {
@@ -90,9 +111,15 @@ impl eframe::App for WhimApp {
                             ui.label(small(e.message(), theme::DESTRUCTIVE));
                         }
                         Some(Ok(f)) => {
-                            ui.label(small(format!("Offset {}", rows::format_offset(top)), theme::MUTED));
+                            ui.label(small(
+                                format!("Offset {}", rows::format_offset(top)),
+                                theme::MUTED,
+                            ));
                             divider(ui);
-                            ui.label(small(format!("Size {}", rows::format_size(f.len)), theme::MUTED));
+                            ui.label(small(
+                                format!("Size {}", rows::format_size(f.len)),
+                                theme::MUTED,
+                            ));
                         }
                         None => {}
                     }
@@ -108,40 +135,49 @@ impl eframe::App for WhimApp {
                 });
             });
 
-        egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| match &self.file {
-            Some(Ok(f)) => {
-                self.view.show(ui, f.data());
-            }
-            Some(Err(e)) => {
-                ui.centered_and_justified(|ui| {
-                    ui.label(RichText::new(e.message()).size(14.0).color(theme::DESTRUCTIVE));
-                });
-            }
-            None => {
-                ui.vertical_centered(|ui| {
-                    ui.add_space((ui.available_height() / 2.0 - 20.0).max(0.0));
-                    ui.label(RichText::new("No file open").size(14.0).color(theme::TEXT));
-                    ui.label(
-                        RichText::new("Run `whim <path>` or choose File > Open to view a file.")
+        egui::CentralPanel::default()
+            .frame(egui::Frame::NONE)
+            .show(ui, |ui| match &self.file {
+                Some(Ok(f)) => {
+                    self.view.show(ui, f.data());
+                }
+                Some(Err(e)) => {
+                    ui.centered_and_justified(|ui| {
+                        ui.label(
+                            RichText::new(e.message())
+                                .size(14.0)
+                                .color(theme::DESTRUCTIVE),
+                        );
+                    });
+                }
+                None => {
+                    ui.vertical_centered(|ui| {
+                        ui.add_space((ui.available_height() / 2.0 - 20.0).max(0.0));
+                        ui.label(RichText::new("No file open").size(14.0).color(theme::TEXT));
+                        ui.label(
+                            RichText::new(
+                                "Run `whim <path>` or choose File > Open to view a file.",
+                            )
                             .size(14.0)
                             .color(theme::MUTED),
-                    );
-                });
-            }
-        });
+                        );
+                    });
+                }
+            });
 
         if self.show_about {
             let mut open = true;
-            egui::Window::new("About Whim").open(&mut open).collapsible(false).resizable(false).show(
-                ui.ctx(),
-                |ui| {
+            egui::Window::new("About Whim")
+                .open(&mut open)
+                .collapsible(false)
+                .resizable(false)
+                .show(ui.ctx(), |ui| {
                     ui.label(format!(
                         "Whim {} \u{2014} toolkit: egui 0.37 ({})",
                         env!("CARGO_PKG_VERSION"),
                         BACKEND
                     ));
-                },
-            );
+                });
             self.show_about = open;
         }
     }

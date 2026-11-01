@@ -30,7 +30,11 @@ impl ImeProbe {
                 self.committed.push_str(text);
                 let count = self.committed.chars().count();
                 if count > MAX_PROBE_CHARS {
-                    self.committed = self.committed.chars().skip(count - MAX_PROBE_CHARS).collect();
+                    self.committed = self
+                        .committed
+                        .chars()
+                        .skip(count - MAX_PROBE_CHARS)
+                        .collect();
                 }
             }
             _ => {}
@@ -61,7 +65,10 @@ mod tests {
     use super::*;
 
     fn pre(s: &str) -> ImeEvent {
-        ImeEvent::Preedit { text: s.to_owned(), active_range_chars: None }
+        ImeEvent::Preedit {
+            text: s.to_owned(),
+            active_range_chars: None,
+        }
     }
 
     #[test]
@@ -133,7 +140,10 @@ mod tests {
     fn delete_surrounding_ignored() {
         let mut p = ImeProbe::new();
         p.apply(&ImeEvent::Commit("x".into()));
-        p.apply(&ImeEvent::DeleteSurrounding { before_chars: 1, after_chars: 0 });
+        p.apply(&ImeEvent::DeleteSurrounding {
+            before_chars: 1,
+            after_chars: 0,
+        });
         assert_eq!(p.committed(), "x");
     }
 }

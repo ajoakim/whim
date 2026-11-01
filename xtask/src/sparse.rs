@@ -23,7 +23,9 @@ pub fn parse_size(s: &str) -> Result<u64, String> {
         "GB" => 1_000_000_000,
         other => return Err(format!("unknown size suffix: {other}")),
     };
-    let v = n.checked_mul(mult).ok_or_else(|| "size overflow".to_string())?;
+    let v = n
+        .checked_mul(mult)
+        .ok_or_else(|| "size overflow".to_string())?;
     if v == 0 {
         return Err("size must be greater than zero".into());
     }
@@ -107,7 +109,11 @@ pub fn on_disk_bytes(path: &Path) -> std::io::Result<u64> {
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::Foundation::GetLastError;
     use windows_sys::Win32::Storage::FileSystem::GetCompressedFileSizeW;
-    let wide: Vec<u16> = path.as_os_str().encode_wide().chain(std::iter::once(0)).collect();
+    let wide: Vec<u16> = path
+        .as_os_str()
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect();
     let mut high = 0u32;
     // SAFETY: wide is NUL-terminated; high is a valid out pointer.
     let low = unsafe { GetCompressedFileSizeW(wide.as_ptr(), &mut high) };
@@ -200,7 +206,10 @@ mod tests {
     }
 
     fn tmp(tag: &str) -> PathBuf {
-        std::env::temp_dir().join(format!("whim-sparse-test-{}-{tag}.sparse.bin", std::process::id()))
+        std::env::temp_dir().join(format!(
+            "whim-sparse-test-{}-{tag}.sparse.bin",
+            std::process::id()
+        ))
     }
 
     #[test]
@@ -211,7 +220,11 @@ mod tests {
         assert_eq!(std::fs::metadata(&p).unwrap().len(), len);
         assert!(on_disk_bytes(&p).unwrap() < MAX_ON_DISK);
         let mut f = std::fs::File::open(&p).unwrap();
-        for (off, m) in [(0u64, &b"WHIM-START"[..]), (len / 2, b"WHIM-MIDDLE"), (len - 16, b"WHIM-END")] {
+        for (off, m) in [
+            (0u64, &b"WHIM-START"[..]),
+            (len / 2, b"WHIM-MIDDLE"),
+            (len - 16, b"WHIM-END"),
+        ] {
             f.seek(SeekFrom::Start(off)).unwrap();
             let mut buf = vec![0u8; m.len()];
             f.read_exact(&mut buf).unwrap();

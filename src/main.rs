@@ -43,7 +43,12 @@ fn main() -> eframe::Result {
         "whim",
         options,
         Box::new(move |cc| {
-            Ok(Box::new(whim::app::WhimApp::new(cc, opened, StartupClock::new(t0, bench), ppp)))
+            Ok(Box::new(whim::app::WhimApp::new(
+                cc,
+                opened,
+                StartupClock::new(t0, bench),
+                ppp,
+            )))
         }),
     )
 }

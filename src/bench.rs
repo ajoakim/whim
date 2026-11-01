@@ -13,7 +13,12 @@ pub struct StartupClock {
 
 impl StartupClock {
     pub fn new(t0: Instant, bench: bool) -> Self {
-        Self { t0, bench, frames: 0, startup_ms: None }
+        Self {
+            t0,
+            bench,
+            frames: 0,
+            startup_ms: None,
+        }
     }
 
     /// Call at the top of every `App::ui`. Requests exactly one repaint (frame 1).
@@ -44,7 +49,9 @@ impl StartupClock {
 }
 
 pub fn format_lines(backend: &str, startup_ms: u64, first_frame_unix_us: u128) -> String {
-    format!("backend={backend}\nstartup_ms={startup_ms}\nfirst_frame_unix_us={first_frame_unix_us}\n")
+    format!(
+        "backend={backend}\nstartup_ms={startup_ms}\nfirst_frame_unix_us={first_frame_unix_us}\n"
+    )
 }
 
 #[cfg(test)]

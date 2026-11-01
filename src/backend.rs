@@ -4,7 +4,11 @@
 #[cfg(not(any(feature = "glow", feature = "wgpu")))]
 compile_error!("enable feature `glow` or `wgpu`");
 
-pub const BACKEND: &str = if cfg!(feature = "glow") { "glow" } else { "wgpu" };
+pub const BACKEND: &str = if cfg!(feature = "glow") {
+    "glow"
+} else {
+    "wgpu"
+};
 
 pub fn renderer() -> eframe::Renderer {
     #[cfg(feature = "glow")]

@@ -30,7 +30,9 @@ where
             Long("ppp") => {
                 let v: f32 = parser.value()?.parse()?;
                 if !(0.5..=4.0).contains(&v) {
-                    return Err(lexopt::Error::Custom("--ppp must be within 0.5..=4.0".into()));
+                    return Err(lexopt::Error::Custom(
+                        "--ppp must be within 0.5..=4.0".into(),
+                    ));
                 }
                 out.ppp = Some(v);
             }

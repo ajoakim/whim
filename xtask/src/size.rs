@@ -14,7 +14,12 @@ pub struct SizeReport {
 pub fn evaluate(bytes: u64, max_mb: Option<f64>) -> SizeReport {
     let mb = bytes as f64 / MIB;
     let pass = max_mb.is_none_or(|m| mb <= m);
-    SizeReport { bytes, mb, max_mb, pass }
+    SizeReport {
+        bytes,
+        mb,
+        max_mb,
+        pass,
+    }
 }
 
 const HELP: &str = "cargo xtask check-size [--bin PATH] [--max-mb F] [--label S]\n  MB means MiB (1,048,576 bytes). Exits 1 when the binary exceeds --max-mb.";
@@ -74,7 +79,11 @@ pub fn run(mut args: lexopt::Parser) -> ExitCode {
     if let Err(e) = std::fs::write(&path, serde_json::to_string_pretty(&j).unwrap()) {
         eprintln!("warning: could not write {}: {e}", path.display());
     }
-    if r.pass { ExitCode::SUCCESS } else { ExitCode::from(1) }
+    if r.pass {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 #[cfg(test)]

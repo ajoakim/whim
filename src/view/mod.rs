@@ -24,7 +24,13 @@ impl Default for ViewState {
 
 impl ViewState {
     pub fn new() -> Self {
-        Self { top: 0, scroll_accum: 0.0, visible_rows: 1, ime: crate::ime::ImeProbe::new(), focus_requested: false }
+        Self {
+            top: 0,
+            scroll_accum: 0.0,
+            visible_rows: 1,
+            ime: crate::ime::ImeProbe::new(),
+            focus_requested: false,
+        }
     }
 
     pub fn top(&self) -> u64 {
@@ -37,7 +43,8 @@ impl ViewState {
         let painter = ui.painter_at(rect);
         painter.rect_filled(rect, 0.0, theme::DOMINANT);
 
-        let track = egui::Rect::from_min_max(egui::pos2(rect.right() - SCROLLBAR_W, rect.top()), rect.max);
+        let track =
+            egui::Rect::from_min_max(egui::pos2(rect.right() - SCROLLBAR_W, rect.top()), rect.max);
         let text_rect = egui::Rect::from_min_max(rect.min, egui::pos2(track.left(), rect.bottom()));
 
         // Read every frame; never cache (scale-factor changes are handled by egui-winit).
@@ -65,7 +72,10 @@ impl ViewState {
         let composing = self.ime.is_composing();
 
         // Input.
-        if response.hovered() || response.has_focus() || ui.input(|i| i.pointer.hover_pos().is_some_and(|p| rect.contains(p))) {
+        if response.hovered()
+            || response.has_focus()
+            || ui.input(|i| i.pointer.hover_pos().is_some_and(|p| rect.contains(p)))
+        {
             let dy = ui.input(|i| i.smooth_scroll_delta.y);
             self.scroll_accum += dy;
             let whole = (self.scroll_accum / rows::ROW_HEIGHT).trunc();
@@ -102,7 +112,8 @@ impl ViewState {
                 self.top = 0;
             }
             if end {
-                self.top = rows::clamp_offset(len.saturating_sub((n as u64) * rows::BYTES_PER_ROW), len);
+                self.top =
+                    rows::clamp_offset(len.saturating_sub((n as u64) * rows::BYTES_PER_ROW), len);
             }
         }
 
@@ -118,16 +129,24 @@ impl ViewState {
 
         // Paint visible rows only.
         let font = FontId::monospace(14.0);
-        for (i, range) in rows::visible_rows(data, self.top, n).into_iter().enumerate() {
+        for (i, range) in rows::visible_rows(data, self.top, n)
+            .into_iter()
+            .enumerate()
+        {
             let y = snap::row_y(text_rect.top(), i, rows::ROW_HEIGHT, ppp);
             let (Ok(s), Ok(e)) = (usize::try_from(range.start), usize::try_from(range.end)) else {
                 continue;
             };
             let gx = snap::snap(text_rect.left() + LEFT_INSET, ppp);
-            let gutter = painter.layout_no_wrap(rows::format_gutter(range.start), font.clone(), theme::MUTED);
+            let gutter = painter.layout_no_wrap(
+                rows::format_gutter(range.start),
+                font.clone(),
+                theme::MUTED,
+            );
             let tx = snap::snap(gx + gutter.size().x + LEFT_INSET, ppp);
             painter.galley(egui::pos2(gx, y), gutter, theme::MUTED);
-            let text = painter.layout_no_wrap(rows::display_text(&data[s..e]), font.clone(), theme::TEXT);
+            let text =
+                painter.layout_no_wrap(rows::display_text(&data[s..e]), font.clone(), theme::TEXT);
             painter.galley(egui::pos2(tx, y), text, theme::TEXT);
         }
 
@@ -142,7 +161,11 @@ impl ViewState {
                     egui::vec2(text_rect.width(), 2.0 * rows::ROW_HEIGHT),
                 );
                 painter.rect_filled(strip, 0.0, theme::SECONDARY);
-                let pre = painter.layout_no_wrap(self.ime.preedit().to_owned(), font.clone(), theme::TEXT);
+                let pre = painter.layout_no_wrap(
+                    self.ime.preedit().to_owned(),
+                    font.clone(),
+                    theme::TEXT,
+                );
                 let w = pre.size().x;
                 let underline_y = oy + rows::ROW_HEIGHT - 3.0;
                 painter.galley(egui::pos2(ox, oy), pre, theme::TEXT);
@@ -153,10 +176,15 @@ impl ViewState {
                     );
                 }
                 caret_x = snap::snap(ox + w, ppp);
-                let done = painter.layout_no_wrap(self.ime.committed().to_owned(), font.clone(), theme::TEXT);
+                let done = painter.layout_no_wrap(
+                    self.ime.committed().to_owned(),
+                    font.clone(),
+                    theme::TEXT,
+                );
                 painter.galley(egui::pos2(ox, oy + rows::ROW_HEIGHT), done, theme::TEXT);
             }
-            let caret_rect = egui::Rect::from_min_size(egui::pos2(caret_x, oy), egui::vec2(2.0, 20.0));
+            let caret_rect =
+                egui::Rect::from_min_size(egui::pos2(caret_x, oy), egui::vec2(2.0, 20.0));
             painter.rect_filled(caret_rect, 0.0, theme::ACCENT);
             ui.ctx().output_mut(|o| {
                 o.ime = Some(egui::output::IMEOutput {
