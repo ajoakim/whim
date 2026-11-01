@@ -27,7 +27,7 @@ Local machine: AMD Ryzen 9 5950X, Intel Arc B580 (driver 32.0.101.6790), Windows
 |--------|-----------|--------------------|--------------------|---------------|---------------|-------|
 | Stripped size | <= 10 MB | 5.01 MB | 9.24 MB | 6.60 MB | 4.07 MB | glow: yes on all OSes (Windows CI 5.0 MB) |
 | Startup median | <= 300 ms | 271.7 ms (max 403.1, in-app median 259.5) | 341.1 ms (max 567.7) | 144.6 ms (llvmpipe) | 192.2 ms (earlier run: 501.6 ms) | glow: yes on Windows; macOS passed in the later run but failed (501.6 ms) in the earlier one, so it is not stable |
-| Idle RSS (settled min, +20..+30 s) | <= 70 MB | 59.6 MB (startup peak 90.7) | not re-measured (old metric 153.5 MB) | 100.7 MB (llvmpipe, not a NO-GO input) | 102.7 MB (peak 105.9) | Windows glow: yes; macOS glow: NO |
+| Idle RSS (settled min, +20..+30 s) | <= 70 MB | 59.6 MB (startup peak 90.7) | not re-measured (old metric 153.5 MB) | 100.7 MB (llvmpipe, not a NO-GO input) | 102.7 MB (peak 105.9) | Windows glow: yes; macOS glow: NO on raw RSS — SUPERSEDED: macOS phys_footprint 37.6 MB passes (see "Comparable footprint metric") |
 | Idle CPU | < 1 % | 0.35 % | 0.00 % | 0.00 % | 0.00 % | yes |
 
 CI table, all jobs (run 41269609008 = NEW settled metric; run 41268608993 = OLD metric: max of +2 s/+12 s samples, 60 MB budget at the time):
@@ -81,7 +81,7 @@ Unit-test proxy: `view::snap` tests pass.
 
 ## CI
 
-Repo: https://github.com/ajoakim/whim (private). Runs:
+Repo: https://github.com/ajoakim/whim (public since 2026-11-01). Runs:
 
 - 41268608993 (OLD idle metric, 60 MB budget): test jobs green on all 3 OSes; gate macOS glow/wgpu, Linux glow/wgpu and Windows wgpu green; gate Windows glow FAILED at "Size gate (glow, hard)". Root cause was a CI bug, not binary size: the step ran under PowerShell, where `$MAX_SIZE_MB` is not an environment reference, so `--max-mb` swallowed `--label` ("invalid float literal"). Local Windows glow is 5.01 MB. Fixed with `shell: bash` on the size steps (34d9163).
 - 41269609008 (NEW settled metric): all 9 jobs green, including Windows glow (5.0 MB).
