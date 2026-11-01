@@ -31,7 +31,14 @@ Whim is built core-first. Phase 1 is a gate: it proves the toolkit and footprint
   3. Idle RAM is in the tens of MB and idle CPU is near zero, with the numbers recorded for glow vs. wgpu
   4. Text is crisp on HiDPI and mixed-DPI displays, and IME composition is checked and its supported scope documented
   5. A written go/no-go on egui (with the fallback toolkit named) exists, backed by the measured numbers, and CI enforces startup, size and idle budgets
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Workspace scaffold (toolchain 1.99.0, glow/wgpu features, xtask stub) + tested byte-offset row model and pixel snapping
+- [ ] 01-02-PLAN.md — eframe 0.37 walking skeleton: args, startup clock, read-only mmap, app shell, virtualized view, bench stdout contract
+- [ ] 01-03-PLAN.md — xtask harness (sparse 20 GiB, check-size, measure) + 3-OS x 2-backend CI workflow + docs/measurements.md
+- [ ] 01-04-PLAN.md — IME probe wiring (preedit/commit/IMEOutput) + glow/wgpu build and harness smoke
+- [ ] 01-05-PLAN.md — Local measurements, manual IME/HiDPI/CI checkpoint, final go/no-go in 01-GATE.md
 **UI hint**: yes
 
 ### Phase 2: Core Storage & Read-Only Viewers
@@ -132,7 +139,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 (Ph
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Toolkit & Footprint Gate | 0/TBD | Not started | - |
+| 1. Toolkit & Footprint Gate | 0/5 | Not started | - |
 | 2. Core Storage & Read-Only Viewers | 0/TBD | Not started | - |
 | 3. Editing, Undo & Hex Overwrite | 0/TBD | Not started | - |
 | 4. Safe Save & Recovery | 0/TBD | Not started | - |
