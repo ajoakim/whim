@@ -12,7 +12,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **CORE-01**: User can open a file of tens of GB and see its first page in under 1 second
 - [ ] **CORE-02**: App never reads a whole file into memory; RAM use grows with edits, not file size
 - [ ] **CORE-03**: User can scroll smoothly through any file, including before line indexing finishes
-- [ ] **CORE-04**: User sees background line-indexing progress in the status bar; line numbers become exact when it completes
+- [ ] **CORE-04**: User sees background line-indexing progress in the status bar; line numbers are shown immediately (approximate/estimated while counting) and become exact when it completes
 - [ ] **CORE-05**: User can jump to a line number or a byte offset
 - [ ] **CORE-06**: User can view files containing extremely long lines (multi-GB single line) without the app freezing
 - [ ] **CORE-07**: All long operations (indexing, search, replace-all, save) show progress and can be cancelled without blocking the UI
@@ -20,7 +20,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Editing (EDIT)
 
 - [ ] **EDIT-01**: User can insert, delete and replace text anywhere in a file of any size
-- [ ] **EDIT-02**: User can select text with mouse and keyboard and copy/cut/paste (with a size cap/warning for huge clipboard operations)
+- [ ] **EDIT-02**: User can cut and paste text (with a size cap/warning for huge clipboard operations)
+- [ ] **EDIT-10**: User can select text with mouse and keyboard and copy it in the read-only viewer (with a size cap/warning for huge selections)
 - [ ] **EDIT-03**: User can undo and redo edits; undo history is bounded so memory does not grow without limit
 - [ ] **EDIT-04**: User can type using OS input methods (IME) for CJK and other composed scripts
 - [ ] **EDIT-05**: User can toggle word wrap (automatically disabled on huge files, with a notice)
@@ -148,6 +149,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-05 | Phase 1 | Pending |
 | UI-04 | Phase 1 | Pending |
 | CORE-01 | Phase 2 | Pending |
+| EDIT-10 | Phase 2 | Pending |
 | OPEN-02 | Phase 2 | Pending |
 | OPEN-09 | Phase 2 | Pending |
 | CORE-02 | Phase 2 | Pending |
@@ -206,8 +208,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-04 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 61 total
-- Mapped to phases: 61
+- v1 requirements: 62 total
+- Mapped to phases: 62
 - Unmapped: 0 ✓
 
 ---

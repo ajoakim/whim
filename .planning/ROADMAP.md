@@ -10,7 +10,8 @@ Whim is built core-first. Phase 1 is a gate: it proves the toolkit and footprint
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [x] **Phase 1: Toolkit & Footprint Gate** - Walking skeleton on all three OSes that measures startup, RAM, HiDPI and IME and decides egui vs. fallback (completed 2026-11-01)
+- [x] **Phase 1: Toolkit & Footprint Gate** - Walking skeleton on all three OSes that measures startup, RAM, HiDPI and IME and decides egui vs. fallback
+ (completed 2026-11-01)
 - [ ] **Phase 2: Core Storage & Read-Only Viewers** - Open any-size file instantly (File > Open, drag & drop) in virtualized text and hex views with background line index
 - [ ] **Phase 3: Editing, Undo & Hex Overwrite** - Insert/delete/replace anywhere, selection, clipboard, IME, bounded undo, byte overwrite
 - [ ] **Phase 4: Safe Save & Recovery** - Atomic, cancellable save of edited huge files, in-place patching, Save As, crash recovery journal
@@ -51,7 +52,7 @@ Plans:
 ### Phase 2: Core Storage & Read-Only Viewers
 **Goal**: User can open a file of any size and immediately scroll, jump and inspect it in text or hex, with the whole file never loaded into memory
 **Depends on**: Phase 1
-**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, HEX-01, HEX-03, HEX-05, UI-01, UI-05, OPEN-02, OPEN-09
+**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, HEX-01, HEX-03, HEX-05, UI-01, UI-05, OPEN-02, OPEN-09, EDIT-10
 **Success Criteria** (what must be TRUE):
   1. User opens a file of tens of GB and sees its first page in under 1 second, with RAM use independent of file size
   2. User scrolls smoothly through the file immediately, before line indexing finishes, sees indexing progress in the status bar, and line numbers become exact on completion
@@ -60,6 +61,7 @@ Plans:
   5. User can view any file in a hex view (offset, hex and ASCII columns), and opening a binary file shows text with a banner offering hex, never auto-switching
   6. User can toggle line numbers and word wrap (wrap auto-disabled on huge files with a notice), and CJK text displays via font fallback; UI shows only tabs area, editor and status bar (line:col, offset, encoding, EOL, indexing progress)
   7. User can open a file via File > Open (native dialog, Ctrl/Cmd+O) or by dragging it onto the window
+  8. Text is laid out by real lines (following line breaks); line numbers appear immediately (approximate while counting, exact when done); user can select text with mouse/keyboard and copy it
 **Plans**: TBD
 **UI hint**: yes
 
