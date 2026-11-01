@@ -12,6 +12,8 @@ pub struct ViewState {
     pub top: u64,
     scroll_accum: f32,
     visible_rows: usize,
+    ime: crate::ime::ImeProbe,
+    focus_requested: bool,
 }
 
 impl Default for ViewState {
@@ -22,7 +24,7 @@ impl Default for ViewState {
 
 impl ViewState {
     pub fn new() -> Self {
-        Self { top: 0, scroll_accum: 0.0, visible_rows: 1 }
+        Self { top: 0, scroll_accum: 0.0, visible_rows: 1, ime: crate::ime::ImeProbe::new(), focus_requested: false }
     }
 
     pub fn top(&self) -> u64 {
@@ -43,6 +45,25 @@ impl ViewState {
         let n = rows::rows_for_height(text_rect.height());
         self.visible_rows = n;
 
+        // Focus: a custom view must claim focus or egui-winit keeps the IME disabled.
+        if response.clicked() || !self.focus_requested {
+            response.request_focus();
+            self.focus_requested = true;
+        }
+        let focused = response.has_focus();
+        if focused {
+            let events = ui.input(|i| i.events.clone());
+            for ev in &events {
+                if let egui::Event::Ime(ime_ev) = ev {
+                    self.ime.apply(ime_ev);
+                }
+            }
+            if !self.ime.is_composing() && ui.input(|i| i.key_pressed(Key::Escape)) {
+                self.ime.escape();
+            }
+        }
+        let composing = self.ime.is_composing();
+
         // Input.
         if response.hovered() || response.has_focus() || ui.input(|i| i.pointer.hover_pos().is_some_and(|p| rect.contains(p))) {
             let dy = ui.input(|i| i.smooth_scroll_delta.y);
@@ -54,7 +75,11 @@ impl ViewState {
             }
             let page = (n as i64 - 2).max(1);
             let (mut delta, mut home, mut end) = (0i64, false, false);
+            // Keys belong to the IME during composition.
             ui.input(|i| {
+                if composing {
+                    return;
+                }
                 if i.key_pressed(Key::ArrowDown) {
                     delta += 1;
                 }
@@ -104,6 +129,43 @@ impl ViewState {
             painter.galley(egui::pos2(gx, y), gutter, theme::MUTED);
             let text = painter.layout_no_wrap(rows::display_text(&data[s..e]), font.clone(), theme::TEXT);
             painter.galley(egui::pos2(tx, y), text, theme::TEXT);
+        }
+
+        // IME probe overlay + caret (static caret, no blink timer).
+        if focused {
+            let ox = snap::snap(text_rect.left() + LEFT_INSET, ppp);
+            let oy = snap::snap(text_rect.top(), ppp);
+            let mut caret_x = ox;
+            if composing || !self.ime.committed().is_empty() {
+                let strip = egui::Rect::from_min_size(
+                    egui::pos2(text_rect.left(), text_rect.top()),
+                    egui::vec2(text_rect.width(), 2.0 * rows::ROW_HEIGHT),
+                );
+                painter.rect_filled(strip, 0.0, theme::SECONDARY);
+                let pre = painter.layout_no_wrap(self.ime.preedit().to_owned(), font.clone(), theme::TEXT);
+                let w = pre.size().x;
+                let underline_y = oy + rows::ROW_HEIGHT - 3.0;
+                painter.galley(egui::pos2(ox, oy), pre, theme::TEXT);
+                if composing {
+                    painter.line_segment(
+                        [egui::pos2(ox, underline_y), egui::pos2(ox + w, underline_y)],
+                        egui::Stroke::new(1.0, theme::ACCENT),
+                    );
+                }
+                caret_x = snap::snap(ox + w, ppp);
+                let done = painter.layout_no_wrap(self.ime.committed().to_owned(), font.clone(), theme::TEXT);
+                painter.galley(egui::pos2(ox, oy + rows::ROW_HEIGHT), done, theme::TEXT);
+            }
+            let caret_rect = egui::Rect::from_min_size(egui::pos2(caret_x, oy), egui::vec2(2.0, 20.0));
+            painter.rect_filled(caret_rect, 0.0, theme::ACCENT);
+            ui.ctx().output_mut(|o| {
+                o.ime = Some(egui::output::IMEOutput {
+                    purpose: egui::IMEPurpose::Normal,
+                    rect: text_rect,
+                    cursor_rect: caret_rect,
+                    should_interrupt_composition: false,
+                });
+            });
         }
 
         // Scrollbar paint.
