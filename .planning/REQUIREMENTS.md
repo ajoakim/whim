@@ -142,13 +142,72 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmap) | | |
+| PERF-01 | Phase 1 | Pending |
+| PERF-02 | Phase 1 | Pending |
+| PERF-05 | Phase 1 | Pending |
+| UI-04 | Phase 1 | Pending |
+| CORE-01 | Phase 2 | Pending |
+| CORE-02 | Phase 2 | Pending |
+| CORE-03 | Phase 2 | Pending |
+| CORE-04 | Phase 2 | Pending |
+| CORE-05 | Phase 2 | Pending |
+| CORE-06 | Phase 2 | Pending |
+| CORE-07 | Phase 2 | Pending |
+| EDIT-05 | Phase 2 | Pending |
+| EDIT-06 | Phase 2 | Pending |
+| HEX-01 | Phase 2 | Pending |
+| HEX-03 | Phase 2 | Pending |
+| HEX-05 | Phase 2 | Pending |
+| UI-01 | Phase 2 | Pending |
+| UI-05 | Phase 2 | Pending |
+| EDIT-01 | Phase 3 | Pending |
+| EDIT-02 | Phase 3 | Pending |
+| EDIT-03 | Phase 3 | Pending |
+| EDIT-04 | Phase 3 | Pending |
+| HEX-02 | Phase 3 | Pending |
+| HEX-04 | Phase 3 | Pending |
+| SAVE-01 | Phase 4 | Pending |
+| SAVE-02 | Phase 4 | Pending |
+| SAVE-03 | Phase 4 | Pending |
+| SAVE-04 | Phase 4 | Pending |
+| SAVE-05 | Phase 4 | Pending |
+| SAVE-08 | Phase 4 | Pending |
+| SAVE-09 | Phase 4 | Pending |
+| ENC-01 | Phase 5 | Pending |
+| ENC-02 | Phase 5 | Pending |
+| ENC-03 | Phase 5 | Pending |
+| ENC-04 | Phase 5 | Pending |
+| ENC-05 | Phase 5 | Pending |
+| ENC-06 | Phase 5 | Pending |
+| OPEN-01 | Phase 5 | Pending |
+| SAVE-06 | Phase 5 | Pending |
+| SAVE-07 | Phase 5 | Pending |
+| SRCH-01 | Phase 6 | Pending |
+| SRCH-02 | Phase 6 | Pending |
+| SRCH-03 | Phase 6 | Pending |
+| SRCH-04 | Phase 6 | Pending |
+| SRCH-05 | Phase 6 | Pending |
+| OPEN-08 | Phase 6 | Pending |
+| VIEW-01 | Phase 7 | Pending |
+| VIEW-02 | Phase 7 | Pending |
+| VIEW-03 | Phase 7 | Pending |
+| VIEW-04 | Phase 7 | Pending |
+| OPEN-02 | Phase 8 | Pending |
+| OPEN-03 | Phase 8 | Pending |
+| OPEN-04 | Phase 8 | Pending |
+| OPEN-05 | Phase 8 | Pending |
+| OPEN-06 | Phase 8 | Pending |
+| OPEN-07 | Phase 8 | Pending |
+| UI-02 | Phase 8 | Pending |
+| UI-03 | Phase 8 | Pending |
+| PERF-03 | Phase 8 | Pending |
+| PERF-04 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 60 total
-- Mapped to phases: 0
-- Unmapped: 60 ⚠️
+- Mapped to phases: 60
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-31*
-*Last updated: 2026-10-31 after initial definition*
+*Last updated: 2026-10-31 after roadmap creation*
