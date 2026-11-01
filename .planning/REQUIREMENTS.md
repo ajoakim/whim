@@ -206,8 +206,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-04 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 60 total
-- Mapped to phases: 60
+- v1 requirements: 61 total
+- Mapped to phases: 61
 - Unmapped: 0 ✓
 
 ---
