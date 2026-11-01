@@ -78,18 +78,24 @@ fn write_at(f: &mut std::fs::File, len: u64, off: u64, data: &[u8]) -> std::io::
 }
 
 pub fn create(path: &Path, len: u64, force: bool) -> std::io::Result<()> {
-    if path.exists() && !force {
-        return Err(Error::new(
-            ErrorKind::AlreadyExists,
-            format!("{} already exists (use --force)", path.display()),
-        ));
+    let mut opts = OpenOptions::new();
+    opts.read(true).write(true);
+    if force {
+        opts.create(true).truncate(true);
+    } else {
+        // Atomic exclusive create: fails if the path exists (also if it is a symlink).
+        opts.create_new(true);
     }
-    let mut f = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(path)?;
+    let mut f = opts.open(path).map_err(|e| {
+        if e.kind() == ErrorKind::AlreadyExists {
+            Error::new(
+                ErrorKind::AlreadyExists,
+                format!("{} already exists (use --force)", path.display()),
+            )
+        } else {
+            e
+        }
+    })?;
     // Must precede set_len/writes, or NTFS zero-fills the gap.
     set_sparse(&f, path)?;
     f.set_len(len)?;

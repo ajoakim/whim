@@ -376,27 +376,40 @@ pub fn run(mut args: lexopt::Parser) -> ExitCode {
     };
     let bin = o.bin.clone().unwrap_or_else(crate::default_bin);
 
-    let mut temp_file: Option<PathBuf> = None;
+    // Removes the temp sparse file on every exit path (return or panic).
+    let mut _temp_guard: Option<TempFile> = None;
     let file = match &o.file {
         Some(f) => f.clone(),
         None => {
-            let p = std::env::temp_dir().join("whim-measure-20g.sparse.bin");
-            if let Err(e) = crate::sparse::create(&p, 20u64 << 30, true) {
+            // Per-process name; create_new inside `sparse::create` refuses pre-existing paths.
+            let p = std::env::temp_dir().join(format!(
+                "whim-measure-{}-20g.sparse.bin",
+                std::process::id()
+            ));
+            // A stale file from a recycled pid is ours to replace; remove_file does not
+            // follow symlinks, and create_new then refuses anything that reappears.
+            let _ = std::fs::remove_file(&p);
+            let guard = TempFile(p.clone());
+            if let Err(e) = crate::sparse::create(&p, 20u64 << 30, false) {
                 eprintln!("error: could not create sparse file: {e}");
                 return ExitCode::from(2);
             }
-            temp_file = Some(p.clone());
+            _temp_guard = Some(guard);
             p
         }
     };
     let file_len = std::fs::metadata(&file).map(|m| m.len()).unwrap_or(0);
 
-    let code = run_inner(&o, &bin, &file, file_len);
+    run_inner(&o, &bin, &file, file_len)
+}
 
-    if let Some(p) = temp_file {
-        let _ = std::fs::remove_file(p);
+/// Deletes the file on drop.
+struct TempFile(PathBuf);
+
+impl Drop for TempFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
     }
-    code
 }
 
 fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode {
