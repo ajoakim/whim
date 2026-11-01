@@ -1,3 +1,4 @@
 /target
 *.sparse.bin
 /measure-tmp/
+/.claude/worktrees/
