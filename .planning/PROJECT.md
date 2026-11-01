@@ -68,7 +68,7 @@ Any file, of any size, opens instantly and can be viewed and edited without the 
 - **Tech stack**: Rust — no GC, mmap-friendly, small static binaries; Go GUI options are heavier or webview-based
 - **Platforms**: Windows, Linux, macOS — all three are first-class
 - **Performance**: < ~200 ms cold startup; < 1 s to first page of a 20 GB file; idle RAM in tens of MB
-- **Footprint**: single portable binary, target < ~15 MB, no runtime/installer dependency
+- **Footprint**: single portable binary on Windows/Linux, target < ~15 MB, no runtime/installer dependency; macOS ships as an unsigned `.app` bundle (Apple requires a bundle for "Open with"; signing deferred to v2)
 - **Memory model**: never read a whole file into memory; all views (text, hex, search) must work over mmap/chunks
 - **UI**: minimal — tabs + editor + status bar, menus for everything else
 
