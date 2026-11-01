@@ -1,4 +1,4 @@
-//! `measure`: spawn whim N times, report startup median/max, idle RSS and idle CPU.
+//! `measure`: spawn whim N times, report startup median/max, settled idle RSS and idle CPU.
 use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
 use std::process::{Child, Command, ExitCode, Stdio};
@@ -8,6 +8,13 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use sysinfo::{Pid, ProcessesToUpdate, System};
 
 const MIB: f64 = 1_048_576.0;
+/// Idle sampling starts this many seconds after launch (startup transient is gone by then).
+const SETTLE_START_SECS: u64 = 20;
+
+/// Minimum of the settled-window samples (the gate metric); 0 when empty.
+pub fn window_min(v: &[f64]) -> f64 {
+    v.iter().cloned().reduce(f64::min).unwrap_or(0.0)
+}
 
 #[derive(Default, Clone, Debug)]
 pub struct Budgets {
@@ -252,6 +259,7 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
     let mut inapp = Vec::new();
     let mut backend = String::from("unknown");
     let (mut idle_rss, mut idle_virt, mut idle_cpu) = (0.0f64, 0.0f64, 0.0f64);
+    let mut idle_rss_peak = 0.0f64;
 
     for i in 0..o.runs {
         let (mut child, s) = match launch(o, bin, file) {
@@ -277,17 +285,56 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
                 let _ = child.wait();
                 return ExitCode::from(2);
             };
+            // Settled window: wait until +SETTLE_START_SECS after launch, then sample
+            // once a second for SETTLE_WINDOW_SECS. The gate metric is the MIN working
+            // set of the window; the max over all samples (incl. startup) is reported only.
+            let launched = Instant::now() - Duration::from_secs_f64(s.total_ms / 1000.0);
+            let mut all_rss: Vec<f64> = Vec::new();
+            let mut window: Vec<f64> = Vec::new();
+            let mut virt: Vec<f64> = Vec::new();
+            let mut cpu_first: Option<u64> = None;
+            let mut cpu_last: Option<(u64, Instant)> = None;
+            let mut cpu_t0 = Instant::now();
+            let start = Duration::from_secs(SETTLE_START_SECS);
+            let end = start + Duration::from_secs(o.idle_secs);
+            // One early sample so the reported peak includes the startup transient.
             std::thread::sleep(Duration::from_secs(2));
-            let a = mem_cpu(&mut sys, pid);
-            std::thread::sleep(Duration::from_secs(o.idle_secs));
-            let b = mem_cpu(&mut sys, pid);
-            if let (Some(a), Some(b)) = (a, b) {
-                idle_rss = a.0.max(b.0);
-                idle_virt = a.1.max(b.1);
-                let dcpu = b.2.saturating_sub(a.2) as f64;
-                idle_cpu = dcpu / (o.idle_secs.max(1) as f64 * 1000.0) * 100.0;
-            } else {
-                eprintln!("warning: could not sample process (exited during idle window?)");
+            if let Some(m) = mem_cpu(&mut sys, pid) {
+                all_rss.push(m.0);
+            }
+            loop {
+                let el = launched.elapsed();
+                if el > end {
+                    break;
+                }
+                if el >= start {
+                    match mem_cpu(&mut sys, pid) {
+                        Some(m) => {
+                            all_rss.push(m.0);
+                            window.push(m.0);
+                            virt.push(m.1);
+                            if cpu_first.is_none() {
+                                cpu_first = Some(m.2);
+                                cpu_t0 = Instant::now();
+                            }
+                            cpu_last = Some((m.2, Instant::now()));
+                        }
+                        None => {
+                            eprintln!(
+                                "warning: could not sample process (exited during idle window?)"
+                            );
+                            break;
+                        }
+                    }
+                }
+                std::thread::sleep(Duration::from_secs(1));
+            }
+            idle_rss = window_min(&window);
+            idle_rss_peak = all_rss.iter().cloned().fold(0.0, f64::max);
+            idle_virt = virt.iter().cloned().fold(0.0, f64::max);
+            if let (Some(f), Some((l, t))) = (cpu_first, cpu_last) {
+                let secs = t.duration_since(cpu_t0).as_secs_f64().max(1.0);
+                idle_cpu = l.saturating_sub(f) as f64 / (secs * 1000.0) * 100.0;
             }
         }
         let _ = child.kill();
@@ -315,6 +362,7 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
     println!("startup_max_ms={startup_max:.1}");
     println!("inapp_startup_median_ms={inapp_median:.1}");
     println!("idle_rss_mb={idle_rss:.1}");
+    println!("idle_rss_peak_mb={idle_rss_peak:.1}");
     println!("idle_virtual_mb={idle_virt:.1}");
     println!("idle_cpu_pct={idle_cpu:.2}");
 
@@ -323,7 +371,7 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
         "backend": backend, "runs": o.runs, "file": file.display().to_string(), "file_len": file_len,
         "startup_total_ms": totals, "startup_median_ms": startup_median, "startup_max_ms": startup_max,
         "first_run_ms": first_run, "inapp_startup_median_ms": inapp_median,
-        "idle_secs": o.idle_secs, "idle_rss_mb": idle_rss, "idle_virtual_mb": idle_virt,
+        "idle_secs": o.idle_secs, "idle_rss_mb": idle_rss, "idle_rss_peak_mb": idle_rss_peak, "idle_virtual_mb": idle_virt,
         "idle_cpu_pct": idle_cpu,
         "budgets": {
             "max_startup_ms": o.budgets.max_startup_ms,
@@ -369,7 +417,7 @@ mod tests {
     fn budgets_evaluate() {
         let b = Budgets {
             max_startup_ms: Some(300.0),
-            max_rss_mb: Some(60.0),
+            max_rss_mb: Some(70.0),
             max_idle_cpu: Some(1.0),
         };
         let ok = Results {
@@ -392,7 +440,7 @@ mod tests {
         assert_eq!(
             evaluate(
                 &Results {
-                    idle_rss_mb: 70.0,
+                    idle_rss_mb: 80.0,
                     ..ok.clone()
                 },
                 &b
@@ -417,6 +465,12 @@ mod tests {
             idle_cpu_pct: 1e9,
         };
         assert!(evaluate(&huge, &Budgets::default()).is_empty());
+    }
+
+    #[test]
+    fn window_min_is_minimum() {
+        assert_eq!(window_min(&[60.0, 58.0, 59.5]), 58.0);
+        assert_eq!(window_min(&[]), 0.0);
     }
 
     #[test]

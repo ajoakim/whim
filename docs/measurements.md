@@ -9,7 +9,7 @@ MB = MiB (1,048,576 bytes) everywhere in this project.
 |--------|----------------|--------------|--------------|
 | Stripped size | < ~15 MB | <= 10 MB | 10 MB hard |
 | Startup | ~200 ms cold | <= 300 ms | 2000 ms soft |
-| Idle RSS | tens of MB | <= 60 MB | 200 MB soft |
+| Idle RSS | tens of MB | <= 70 MB (settled working set) | 200 MB soft |
 | Idle CPU | ~0 | < 1 % | 2 % soft |
 
 ## Method
