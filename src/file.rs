@@ -1,4 +1,4 @@
-//! Read-only open + mmap. Nothing is read, populated or advised.
+//! Read-only open + mmap. Nothing is preloaded.
 
 use std::path::{Path, PathBuf};
 
