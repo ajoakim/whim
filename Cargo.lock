@@ -3409,6 +3409,7 @@ dependencies = [
  "eframe",
  "lexopt",
  "memmap2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

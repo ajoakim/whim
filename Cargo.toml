@@ -30,3 +30,6 @@ codegen-units = 1
 panic = "abort"
 strip = "symbols"
 debug = 0
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", default-features = false, features = ["Win32_System_Console", "Win32_Foundation"] }
