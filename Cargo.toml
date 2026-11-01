@@ -1,0 +1,31 @@
+[workspace]
+members = [".", "xtask"]
+resolver = "3"
+
+[package]
+name = "whim"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+description = "Whim - a lightweight editor for files of any size"
+
+[features]
+default = ["glow", "bundled-mono"]
+glow = ["eframe/glow"]
+wgpu = ["eframe/wgpu"]
+bundled-mono = []
+accesskit = ["eframe/accesskit"]   # NOT default; measurement-only (plan 05 records the size delta)
+
+[dependencies]
+eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "x11", "wayland"] }
+memmap2 = "0.9.12"
+lexopt = "0.3.2"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+debug = 0
