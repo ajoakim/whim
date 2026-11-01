@@ -38,8 +38,8 @@ Plans:
 - [x] 01-01-PLAN.md — Workspace scaffold (toolchain 1.99.0, glow/wgpu features, xtask stub) + tested byte-offset row model and pixel snapping
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 01-02-PLAN.md — eframe 0.37 walking skeleton: args, startup clock, read-only mmap, app shell, virtualized view, bench stdout contract
-- [ ] 01-03-PLAN.md — xtask harness (sparse 20 GiB, check-size, measure) + 3-OS x 2-backend CI workflow + docs/measurements.md
+- [x] 01-02-PLAN.md — eframe 0.37 walking skeleton: args, startup clock, read-only mmap, app shell, virtualized view, bench stdout contract
+- [x] 01-03-PLAN.md — xtask harness (sparse 20 GiB, check-size, measure) + 3-OS x 2-backend CI workflow + docs/measurements.md
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01-04-PLAN.md — IME probe wiring (preedit/commit/IMEOutput) + glow/wgpu build and harness smoke
@@ -146,7 +146,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 (Ph
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Toolkit & Footprint Gate | 1/5 | In Progress|  |
+| 1. Toolkit & Footprint Gate | 3/5 | In Progress|  |
 | 2. Core Storage & Read-Only Viewers | 0/TBD | Not started | - |
 | 3. Editing, Undo & Hex Overwrite | 0/TBD | Not started | - |
 | 4. Safe Save & Recovery | 0/TBD | Not started | - |
