@@ -137,3 +137,20 @@ Findings:
 - The 20 GiB file adds no working set; it adds about 40 MB of commit (file-backed section accounting), not resident RAM.
 - Attribution: egui/eframe plus the GL driver is about 64 MB (bare eframe); whim's own additions are not measurable. Software GL (Mesa llvmpipe) is much larger (116 MB), so driver choice swings the number by tens of MB. Slint was not tested.
 - Outcome: the harness now measures the settled minimum (+20..+30 s); local re-run gives 59.6 MB (peak 90.7 MB).
+
+## Comparable footprint metric (re-measure)
+
+The harness now gates `idle_footprint_mb`, an OS-specific counter that is comparable across OSes: `phys_footprint` on macOS (`proc_pid_rusage`, what Activity Monitor shows, excludes shared framework pages), PSS from `/proc/<pid>/smaps_rollup` on Linux, working set on Windows (private bytes also reported). Same window as before (min of 1 s samples from +20 s to +30 s). Raw `idle_rss_mb` is kept, report only. The bare column is `examples/bare.rs` (eframe 0.37 glow, one label, no file), measured the same way. CI run 41270819589; local Windows run is real hardware, 20 GiB sparse file for whim. Budget is 70 MB.
+
+| OS/runner | backend | metric | whim settled | bare-eframe settled | whim minus bare | startup median |
+|---|---|---|---|---|---|---|
+| Windows 11 local (real GPU) | glow | working_set | 59.9 MB | 57.4 MB | +2.5 MB | 269.8 ms |
+| windows-latest CI (VM, Mesa llvmpipe software GL) | glow | working_set | 82.9 MB | 80.0 MB | +2.8 MB | 265.3 ms |
+| ubuntu-22.04 CI (VM, Xvfb + llvmpipe software GL) | glow | pss | 75.1 MB | 71.7 MB | +3.4 MB | 128.9 ms |
+| macos-latest CI (arm64 VM) | glow | phys_footprint | 37.6 MB | 38.9 MB | -1.3 MB (noise) | 216.7 ms |
+
+Supplementary: macOS raw RSS was 103.2 MB (whim) / 103.9 MB (bare), so the earlier 102.7 MB figure was dominated by shared framework pages that `phys_footprint` does not count. Linux private (Private_Clean+Private_Dirty) 54.1 MB (whim) / 50.4 MB (bare). Windows local private bytes 100.5 MB (whim, includes about 40 MB commit from the mapped 20 GiB file) / 59.2 MB (bare).
+
+### Re-evaluation inputs
+
+Under the comparable per-OS metric (CI run 41270819589, https://github.com/ajoakim/whim/actions/runs/41270819589), whim is within the 70 MB budget on Windows real hardware (59.9 MB) and on macOS (phys_footprint 37.6 MB). It is above 70 MB on the two software-GL CI VMs: windows-latest 82.9 MB (Mesa llvmpipe) and ubuntu-22.04 75.1 MB PSS (llvmpipe); these two figures are inflated by software GL and are VM numbers, as is the macOS one (arm64 VM, but it uses the real Apple GL stack). Whim exceeds the bare eframe floor by only 2.5 to 3.4 MB on Windows and Linux and by -1.3 MB (noise) on macOS, so essentially all idle memory is the toolkit plus GL driver, not whim code. The original macOS RSS NO-GO (102.7 MB) was an artefact of counting shared framework pages. Verdict above is unchanged; the orchestrator and user decide.

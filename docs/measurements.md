@@ -100,3 +100,16 @@ Top crates from `cargo bloat --release --crates` (run 41268608993): std 760.7 Ki
 ## accesskit
 
 glow + accesskit is 5.32 MB vs 5.01 MB default (+0.31 MB); see Size deltas.
+
+## Comparable footprint metric (re-measure)
+
+The harness now gates `idle_footprint_mb`, an OS-specific counter that is comparable across OSes: `phys_footprint` on macOS (`proc_pid_rusage`, what Activity Monitor shows, excludes shared framework pages), PSS from `/proc/<pid>/smaps_rollup` on Linux, working set on Windows (private bytes also reported). Same window as before (min of 1 s samples from +20 s to +30 s). Raw `idle_rss_mb` is kept, report only. The bare column is `examples/bare.rs` (eframe 0.37 glow, one label, no file), measured the same way. CI run 41270819589; local Windows run is real hardware, 20 GiB sparse file for whim. Budget is 70 MB.
+
+| OS/runner | backend | metric | whim settled | bare-eframe settled | whim minus bare | startup median |
+|---|---|---|---|---|---|---|
+| Windows 11 local (real GPU) | glow | working_set | 59.9 MB | 57.4 MB | +2.5 MB | 269.8 ms |
+| windows-latest CI (VM, Mesa llvmpipe software GL) | glow | working_set | 82.9 MB | 80.0 MB | +2.8 MB | 265.3 ms |
+| ubuntu-22.04 CI (VM, Xvfb + llvmpipe software GL) | glow | pss | 75.1 MB | 71.7 MB | +3.4 MB | 128.9 ms |
+| macos-latest CI (arm64 VM) | glow | phys_footprint | 37.6 MB | 38.9 MB | -1.3 MB (noise) | 216.7 ms |
+
+Supplementary: macOS raw RSS was 103.2 MB (whim) / 103.9 MB (bare), so the earlier 102.7 MB figure was dominated by shared framework pages that `phys_footprint` does not count. Linux private (Private_Clean+Private_Dirty) 54.1 MB (whim) / 50.4 MB (bare). Windows local private bytes 100.5 MB (whim, includes about 40 MB commit from the mapped 20 GiB file) / 59.2 MB (bare).
