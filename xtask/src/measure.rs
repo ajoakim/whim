@@ -1,4 +1,4 @@
-//! `measure`: spawn whim N times, report startup median/max, settled idle RSS and idle CPU.
+//! `measure`: spawn whim N times, report startup median/max, settled idle footprint and idle CPU.
 use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
 use std::process::{Child, Command, ExitCode, Stdio};
@@ -26,7 +26,7 @@ pub struct Budgets {
 #[derive(Default, Clone, Debug)]
 pub struct Results {
     pub startup_median_ms: f64,
-    pub idle_rss_mb: f64,
+    pub idle_footprint_mb: f64,
     pub idle_cpu_pct: f64,
 }
 
@@ -63,9 +63,12 @@ pub fn evaluate(r: &Results, b: &Budgets) -> Vec<String> {
         ));
     }
     if let Some(m) = b.max_rss_mb
-        && r.idle_rss_mb > m
+        && r.idle_footprint_mb > m
     {
-        v.push(format!("idle RSS {:.1} MB > max {m} MB", r.idle_rss_mb));
+        v.push(format!(
+            "idle footprint ({FOOTPRINT_METRIC}) {:.1} MB > max {m} MB",
+            r.idle_footprint_mb
+        ));
     }
     if let Some(m) = b.max_idle_cpu
         && r.idle_cpu_pct > m
@@ -207,14 +210,118 @@ fn launch(o: &Opts, bin: &PathBuf, file: &PathBuf) -> Result<(Child, Sample), St
     }
 }
 
-fn mem_cpu(sys: &mut System, pid: Pid) -> Option<(f64, f64, u64)> {
+/// One memory/CPU observation of the child.
+struct Snap {
+    /// Raw resident set (report only): RSS on macOS/Linux, working set on Windows.
+    rss: f64,
+    /// Gated, OS-specific footprint (see `FOOTPRINT_METRIC`).
+    footprint: f64,
+    /// Private bytes where cheaply available (Linux Private_Clean+Private_Dirty, Windows PrivateUsage).
+    private: Option<f64>,
+    virt: f64,
+    cpu_ms: u64,
+}
+
+/// Which OS counter `idle_footprint_mb` is. macOS: `phys_footprint` is what Activity Monitor
+/// shows and excludes shared framework pages that RSS counts. Linux: PSS divides shared pages
+/// among sharers. Windows: working set (private bytes reported alongside).
+pub const FOOTPRINT_METRIC: &str = if cfg!(target_os = "macos") {
+    "phys_footprint"
+} else if cfg!(target_os = "linux") {
+    "pss"
+} else {
+    "working_set"
+};
+
+/// Parse `Pss:`, `Private_Clean:`, `Private_Dirty:` (kB) from smaps_rollup text.
+/// Returns (pss_bytes, private_bytes).
+pub fn parse_smaps_rollup(text: &str) -> Option<(u64, u64)> {
+    let (mut pss, mut pc, mut pd) = (None, 0u64, 0u64);
+    for line in text.lines() {
+        let Some((k, v)) = line.split_once(':') else {
+            continue;
+        };
+        let kb = || {
+            v.split_whitespace()
+                .next()
+                .and_then(|n| n.parse::<u64>().ok())
+        };
+        match k {
+            "Pss" => pss = kb(),
+            "Private_Clean" => pc = kb().unwrap_or(0),
+            "Private_Dirty" => pd = kb().unwrap_or(0),
+            _ => {}
+        }
+    }
+    pss.map(|p| (p * 1024, (pc + pd) * 1024))
+}
+
+#[cfg(target_os = "linux")]
+fn os_footprint(pid: u32) -> Option<(f64, Option<f64>)> {
+    let t = std::fs::read_to_string(format!("/proc/{pid}/smaps_rollup")).ok()?;
+    let (pss, private) = parse_smaps_rollup(&t)?;
+    Some((pss as f64 / MIB, Some(private as f64 / MIB)))
+}
+
+#[cfg(target_os = "macos")]
+fn os_footprint(pid: u32) -> Option<(f64, Option<f64>)> {
+    // SAFETY: rusage_info_v4 is plain-old-data; proc_pid_rusage fills it for RUSAGE_INFO_V4.
+    // The libc prototype takes `*mut rusage_info_t` (pointer to a `*mut c_void`), the
+    // documented usage is to pass the address of the struct cast to that type.
+    unsafe {
+        let mut info: libc::rusage_info_v4 = std::mem::zeroed();
+        let rc = libc::proc_pid_rusage(
+            pid as libc::c_int,
+            libc::RUSAGE_INFO_V4,
+            &mut info as *mut libc::rusage_info_v4 as *mut libc::rusage_info_t,
+        );
+        if rc != 0 {
+            return None;
+        }
+        Some((info.ri_phys_footprint as f64 / MIB, None))
+    }
+}
+
+#[cfg(windows)]
+fn os_footprint(pid: u32) -> Option<(f64, Option<f64>)> {
+    use windows_sys::Win32::Foundation::CloseHandle;
+    use windows_sys::Win32::System::ProcessStatus::{
+        GetProcessMemoryInfo, PROCESS_MEMORY_COUNTERS, PROCESS_MEMORY_COUNTERS_EX,
+    };
+    use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION};
+    // SAFETY: handle is checked for null and closed; the counters struct is POD with cb set.
+    unsafe {
+        let h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+        if h.is_null() {
+            return None;
+        }
+        let mut c: PROCESS_MEMORY_COUNTERS_EX = std::mem::zeroed();
+        c.cb = std::mem::size_of::<PROCESS_MEMORY_COUNTERS_EX>() as u32;
+        let ok = GetProcessMemoryInfo(h, &mut c as *mut _ as *mut PROCESS_MEMORY_COUNTERS, c.cb);
+        CloseHandle(h);
+        if ok == 0 {
+            return None;
+        }
+        // Gated value stays the working set; private bytes are extra.
+        Some((
+            c.WorkingSetSize as f64 / MIB,
+            Some(c.PrivateUsage as f64 / MIB),
+        ))
+    }
+}
+
+fn snapshot(sys: &mut System, pid: Pid) -> Option<Snap> {
     sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
     let p = sys.process(pid)?;
-    Some((
-        p.memory() as f64 / MIB,
-        p.virtual_memory() as f64 / MIB,
-        p.accumulated_cpu_time(),
-    ))
+    let rss = p.memory() as f64 / MIB;
+    let (footprint, private) = os_footprint(pid.as_u32()).unwrap_or((rss, None));
+    Some(Snap {
+        rss,
+        footprint,
+        private,
+        virt: p.virtual_memory() as f64 / MIB,
+        cpu_ms: p.accumulated_cpu_time(),
+    })
 }
 
 pub fn run(mut args: lexopt::Parser) -> ExitCode {
@@ -259,6 +366,8 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
     let mut inapp = Vec::new();
     let mut backend = String::from("unknown");
     let (mut idle_rss, mut idle_virt, mut idle_cpu) = (0.0f64, 0.0f64, 0.0f64);
+    let (mut idle_fp, mut idle_fp_peak) = (0.0f64, 0.0f64);
+    let mut idle_private: Option<f64> = None;
     let mut idle_rss_peak = 0.0f64;
 
     for i in 0..o.runs {
@@ -286,11 +395,14 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
                 return ExitCode::from(2);
             };
             // Settled window: wait until +SETTLE_START_SECS after launch, then sample
-            // once a second for SETTLE_WINDOW_SECS. The gate metric is the MIN working
-            // set of the window; the max over all samples (incl. startup) is reported only.
+            // once a second. The gate metric is the MIN footprint of the window; the max
+            // over all samples (incl. startup) is reported only.
             let launched = Instant::now() - Duration::from_secs_f64(s.total_ms / 1000.0);
             let mut all_rss: Vec<f64> = Vec::new();
-            let mut window: Vec<f64> = Vec::new();
+            let mut all_fp: Vec<f64> = Vec::new();
+            let mut win_rss: Vec<f64> = Vec::new();
+            let mut win_fp: Vec<f64> = Vec::new();
+            let mut win_priv: Vec<f64> = Vec::new();
             let mut virt: Vec<f64> = Vec::new();
             let mut cpu_first: Option<u64> = None;
             let mut cpu_last: Option<(u64, Instant)> = None;
@@ -299,8 +411,9 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
             let end = start + Duration::from_secs(o.idle_secs);
             // One early sample so the reported peak includes the startup transient.
             std::thread::sleep(Duration::from_secs(2));
-            if let Some(m) = mem_cpu(&mut sys, pid) {
-                all_rss.push(m.0);
+            if let Some(m) = snapshot(&mut sys, pid) {
+                all_rss.push(m.rss);
+                all_fp.push(m.footprint);
             }
             loop {
                 let el = launched.elapsed();
@@ -308,16 +421,21 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
                     break;
                 }
                 if el >= start {
-                    match mem_cpu(&mut sys, pid) {
+                    match snapshot(&mut sys, pid) {
                         Some(m) => {
-                            all_rss.push(m.0);
-                            window.push(m.0);
-                            virt.push(m.1);
+                            all_rss.push(m.rss);
+                            all_fp.push(m.footprint);
+                            win_rss.push(m.rss);
+                            win_fp.push(m.footprint);
+                            if let Some(p) = m.private {
+                                win_priv.push(p);
+                            }
+                            virt.push(m.virt);
                             if cpu_first.is_none() {
-                                cpu_first = Some(m.2);
+                                cpu_first = Some(m.cpu_ms);
                                 cpu_t0 = Instant::now();
                             }
-                            cpu_last = Some((m.2, Instant::now()));
+                            cpu_last = Some((m.cpu_ms, Instant::now()));
                         }
                         None => {
                             eprintln!(
@@ -329,8 +447,11 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
                 }
                 std::thread::sleep(Duration::from_secs(1));
             }
-            idle_rss = window_min(&window);
+            idle_rss = window_min(&win_rss);
+            idle_fp = window_min(&win_fp);
+            idle_private = (!win_priv.is_empty()).then(|| window_min(&win_priv));
             idle_rss_peak = all_rss.iter().cloned().fold(0.0, f64::max);
+            idle_fp_peak = all_fp.iter().cloned().fold(0.0, f64::max);
             idle_virt = virt.iter().cloned().fold(0.0, f64::max);
             if let (Some(f), Some((l, t))) = (cpu_first, cpu_last) {
                 let secs = t.duration_since(cpu_t0).as_secs_f64().max(1.0);
@@ -349,7 +470,7 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
 
     let results = Results {
         startup_median_ms: startup_median,
-        idle_rss_mb: idle_rss,
+        idle_footprint_mb: idle_fp,
         idle_cpu_pct: idle_cpu,
     };
     let violations = evaluate(&results, &o.budgets);
@@ -361,6 +482,12 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
     println!("startup_median_ms={startup_median:.1}");
     println!("startup_max_ms={startup_max:.1}");
     println!("inapp_startup_median_ms={inapp_median:.1}");
+    println!("idle_footprint_metric={FOOTPRINT_METRIC}");
+    println!("idle_footprint_mb={idle_fp:.1}");
+    println!("idle_footprint_peak_mb={idle_fp_peak:.1}");
+    if let Some(p) = idle_private {
+        println!("idle_private_mb={p:.1}");
+    }
     println!("idle_rss_mb={idle_rss:.1}");
     println!("idle_rss_peak_mb={idle_rss_peak:.1}");
     println!("idle_virtual_mb={idle_virt:.1}");
@@ -371,7 +498,8 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
         "backend": backend, "runs": o.runs, "file": file.display().to_string(), "file_len": file_len,
         "startup_total_ms": totals, "startup_median_ms": startup_median, "startup_max_ms": startup_max,
         "first_run_ms": first_run, "inapp_startup_median_ms": inapp_median,
-        "idle_secs": o.idle_secs, "idle_rss_mb": idle_rss, "idle_rss_peak_mb": idle_rss_peak, "idle_virtual_mb": idle_virt,
+        "idle_secs": o.idle_secs, "idle_footprint_mb": idle_fp, "idle_footprint_metric": FOOTPRINT_METRIC,
+        "idle_footprint_peak_mb": idle_fp_peak, "idle_private_mb": idle_private, "idle_rss_mb": idle_rss, "idle_rss_peak_mb": idle_rss_peak, "idle_virtual_mb": idle_virt,
         "idle_cpu_pct": idle_cpu,
         "budgets": {
             "max_startup_ms": o.budgets.max_startup_ms,
@@ -422,7 +550,7 @@ mod tests {
         };
         let ok = Results {
             startup_median_ms: 250.0,
-            idle_rss_mb: 50.0,
+            idle_footprint_mb: 50.0,
             idle_cpu_pct: 0.5,
         };
         assert!(evaluate(&ok, &b).is_empty());
@@ -440,7 +568,7 @@ mod tests {
         assert_eq!(
             evaluate(
                 &Results {
-                    idle_rss_mb: 80.0,
+                    idle_footprint_mb: 80.0,
                     ..ok.clone()
                 },
                 &b
@@ -461,7 +589,7 @@ mod tests {
         );
         let huge = Results {
             startup_median_ms: 1e9,
-            idle_rss_mb: 1e9,
+            idle_footprint_mb: 1e9,
             idle_cpu_pct: 1e9,
         };
         assert!(evaluate(&huge, &Budgets::default()).is_empty());
@@ -471,6 +599,13 @@ mod tests {
     fn window_min_is_minimum() {
         assert_eq!(window_min(&[60.0, 58.0, 59.5]), 58.0);
         assert_eq!(window_min(&[]), 0.0);
+    }
+
+    #[test]
+    fn smaps_rollup_parse() {
+        let t = "55d0-7ffd [rollup]\nRss:   100 kB\nPss:   60 kB\nPss_Anon: 5 kB\nPrivate_Clean: 10 kB\nPrivate_Dirty: 30 kB\n";
+        assert_eq!(parse_smaps_rollup(t), Some((60 * 1024, 40 * 1024)));
+        assert_eq!(parse_smaps_rollup("Rss: 1 kB\n"), None);
     }
 
     #[test]

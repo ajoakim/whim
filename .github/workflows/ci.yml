@@ -118,6 +118,37 @@ jobs:
           cargo xtask measure --runs 10
           --max-startup-ms $CI_MAX_STARTUP_MS --max-rss-mb $CI_MAX_RSS_MB
           --max-idle-cpu $CI_MAX_IDLE_CPU --label ${{ matrix.os }}-${{ matrix.backend }}
+      - name: Build bare eframe baseline (glow, report only)
+        if: matrix.backend == 'glow'
+        continue-on-error: true
+        shell: bash
+        run: cargo build --release --locked --example bare
+      - name: Copy Mesa next to bare example (Windows)
+        if: runner.os == 'Windows' && matrix.backend == 'glow'
+        continue-on-error: true
+        shell: bash
+        run: cp target/release/opengl32.dll target/release/libgallium_wgl.dll target/release/examples/ && { [ ! -f target/release/libglapi.dll ] || cp target/release/libglapi.dll target/release/examples/; }
+      - name: Measure bare baseline (Linux, report only)
+        if: runner.os == 'Linux' && matrix.backend == 'glow'
+        continue-on-error: true
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: >-
+          xvfb-run -a -s "-screen 0 1280x800x24 +extension GLX"
+          cargo xtask measure --runs 10 --bin target/release/examples/bare
+          --label ${{ matrix.os }}-bare
+      - name: Measure bare baseline (Windows, report only)
+        if: runner.os == 'Windows' && matrix.backend == 'glow'
+        continue-on-error: true
+        env:
+          GALLIUM_DRIVER: llvmpipe
+        shell: bash
+        run: cargo xtask measure --runs 10 --bin target/release/examples/bare.exe --label ${{ matrix.os }}-bare
+      - name: Measure bare baseline (macOS, report only)
+        if: runner.os == 'macOS' && matrix.backend == 'glow'
+        continue-on-error: true
+        shell: bash
+        run: cargo xtask measure --runs 10 --bin target/release/examples/bare --label ${{ matrix.os }}-bare
       - name: cargo bloat
         if: matrix.os == 'ubuntu-22.04' && matrix.backend == 'glow'
         continue-on-error: true
