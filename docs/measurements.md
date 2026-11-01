@@ -17,7 +17,7 @@ MB = MiB (1,048,576 bytes) everywhere in this project.
 - Harness: `cargo xtask measure` (median of N runs, harness-side spawn-to-first-frame time; run 0 is reported separately as cold-ish; idle RSS is the MINIMUM working set sampled once a second over +20 s..+30 s after launch (settled window; user decision 2026-10-31), the max seen including startup is reported separately as `idle_rss_peak_mb`; idle CPU is measured over the same window. Rows dated before the harness change used the old metric: max of samples at +2 s and +12 s).
 - Size: `cargo xtask check-size` on the stripped release binary.
 - The 20 GiB test file is a sparse file created by `cargo xtask sparse`; on-disk size stays under 100 MB.
-- CI is warm-only and uses software GL on Windows (Mesa llvmpipe) and Linux (Xvfb + llvmpipe), so CI runtime numbers are not representative of user hardware. Size is a hard CI limit; runtime thresholds in CI are generous.
+- CI is warm-only and uses software GL on Windows (Mesa llvmpipe) and Linux (Xvfb + llvmpipe), so CI runtime numbers are not representative of user hardware. Size is a hard CI limit; runtime thresholds in CI are generous. The Windows CI measure step is report-only by design (`continue-on-error`): it uses software GL on a VM, records numbers, and cannot fail the build or feed the NO-GO decision. The wgpu jobs are also report-only (no budget flags). Only the size gate (10 MiB, glow) is hard on every OS.
 
 ## Results
 

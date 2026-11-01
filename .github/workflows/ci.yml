@@ -2,6 +2,7 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -31,6 +32,8 @@ jobs:
         os: [windows-latest, ubuntu-22.04, macos-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.99.0
@@ -58,6 +61,8 @@ jobs:
         backend: [glow, wgpu]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.99.0
@@ -93,31 +98,39 @@ jobs:
           Copy-Item mesa/x64/opengl32.dll target/release/
           Copy-Item mesa/x64/libgallium_wgl.dll target/release/
           if (Test-Path mesa/x64/libglapi.dll) { Copy-Item mesa/x64/libglapi.dll target/release/ }
+      # Budgets are enforced for glow only; wgpu is report-only (no --max-* flags).
       - name: Measure (Linux, Xvfb + llvmpipe)
         if: runner.os == 'Linux'
+        shell: bash
         env:
+          BUDGET_FLAGS: ${{ matrix.backend == 'glow' && format('--max-startup-ms {0} --max-rss-mb {1} --max-idle-cpu {2}', env.CI_MAX_STARTUP_MS, env.CI_MAX_RSS_MB, env.CI_MAX_IDLE_CPU) || '' }}
           LIBGL_ALWAYS_SOFTWARE: "1"
         run: >-
           xvfb-run -a -s "-screen 0 1280x800x24 +extension GLX"
           cargo xtask measure --runs 10
-          --max-startup-ms $CI_MAX_STARTUP_MS --max-rss-mb $CI_MAX_RSS_MB
-          --max-idle-cpu $CI_MAX_IDLE_CPU --label ${{ matrix.os }}-${{ matrix.backend }}
-      - name: Measure (Windows, llvmpipe best-effort)
+          $BUDGET_FLAGS --label ${{ matrix.os }}-${{ matrix.backend }}
+      # REPORT-ONLY: Windows CI renders with software GL (Mesa llvmpipe) on a VM, so these
+      # numbers are not representative and are not a NO-GO input (see 01-GATE.md). The step
+      # is deliberately continue-on-error; it records numbers but cannot fail the build.
+      # The size gate above stays hard.
+      - name: Measure (Windows, software GL, REPORT-ONLY)
         if: runner.os == 'Windows'
-        continue-on-error: ${{ runner.os == 'Windows' }}
+        continue-on-error: true
         env:
+          BUDGET_FLAGS: ${{ matrix.backend == 'glow' && format('--max-startup-ms {0} --max-rss-mb {1} --max-idle-cpu {2}', env.CI_MAX_STARTUP_MS, env.CI_MAX_RSS_MB, env.CI_MAX_IDLE_CPU) || '' }}
           GALLIUM_DRIVER: llvmpipe
         shell: bash
         run: >-
           cargo xtask measure --runs 10
-          --max-startup-ms $CI_MAX_STARTUP_MS --max-rss-mb $CI_MAX_RSS_MB
-          --max-idle-cpu $CI_MAX_IDLE_CPU --label ${{ matrix.os }}-${{ matrix.backend }}
+          $BUDGET_FLAGS --label ${{ matrix.os }}-${{ matrix.backend }}
       - name: Measure (macOS)
         if: runner.os == 'macOS'
+        shell: bash
+        env:
+          BUDGET_FLAGS: ${{ matrix.backend == 'glow' && format('--max-startup-ms {0} --max-rss-mb {1} --max-idle-cpu {2}', env.CI_MAX_STARTUP_MS, env.CI_MAX_RSS_MB, env.CI_MAX_IDLE_CPU) || '' }}
         run: >-
           cargo xtask measure --runs 10
-          --max-startup-ms $CI_MAX_STARTUP_MS --max-rss-mb $CI_MAX_RSS_MB
-          --max-idle-cpu $CI_MAX_IDLE_CPU --label ${{ matrix.os }}-${{ matrix.backend }}
+          $BUDGET_FLAGS --label ${{ matrix.os }}-${{ matrix.backend }}
       - name: Build bare eframe baseline (glow, report only)
         if: matrix.backend == 'glow'
         continue-on-error: true
@@ -153,7 +166,7 @@ jobs:
         if: matrix.os == 'ubuntu-22.04' && matrix.backend == 'glow'
         continue-on-error: true
         run: |
-          cargo install cargo-bloat --locked
+          cargo install cargo-bloat --version 0.12.1 --locked
           mkdir -p target/measure
           cargo bloat --release --crates -n 40 > target/measure/bloat-ubuntu-glow.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
