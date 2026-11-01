@@ -75,9 +75,11 @@ jobs:
         run: cargo build --release --locked --no-default-features --features wgpu,bundled-mono
       - name: Size gate (glow, hard)
         if: matrix.backend == 'glow'
+        shell: bash
         run: cargo xtask check-size --max-mb $MAX_SIZE_MB --label ${{ matrix.os }}-glow
       - name: Size report (wgpu, report only)
         if: matrix.backend == 'wgpu'
+        shell: bash
         run: cargo xtask check-size --label ${{ matrix.os }}-wgpu
       - name: Install Mesa llvmpipe (Windows, glow)
         if: runner.os == 'Windows' && matrix.backend == 'glow'
