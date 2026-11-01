@@ -42,6 +42,8 @@ User can open a file of any size (File > Open, drag & drop, CLI) and immediately
 - D-18: Phase 2 setup task: hard-gate macOS CI (real GL) at idle footprint ≤ 70 MB and startup median ≤ 600 ms; software-GL runners stay report-only; size hard everywhere (user decision 2026-11-01).
 - D-19: File::open on a FIFO/device must not block the UI thread (Phase 1 review note): open/stat off the UI thread or reject non-regular files with a clear message.
 
+- D-20: With word wrap OFF, the text view scrolls horizontally: horizontal scrollbar, Shift+wheel and Left/Right past the edge scroll sideways; width bounded by the 10k-char row cap (user decision 2026-11-01; overrides UI-SPEC draft's clip-only default).
+
 ### Claude's Discretion
 - Module layout, chunk-cache size/eviction, exact estimation formula, keyboard shortcuts not listed above, banner/dialog styling within UI-SPEC.
 
