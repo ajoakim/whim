@@ -1,0 +1,131 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # MB = MiB (1,048,576 bytes). Size is a hard limit; runtime thresholds are generous
+  # runner-level limits (software GL). Plan 05 records real baselines.
+  MAX_SIZE_MB: "10"
+  CI_MAX_STARTUP_MS: "2000"
+  CI_MAX_RSS_MB: "200"
+  CI_MAX_IDLE_CPU: "2.0"
+  LINUX_GL_DEPS: >-
+    xvfb libgl1-mesa-dri libglx-mesa0 libegl1 libxkbcommon-x11-0 libx11-dev
+    libxcursor-dev libxrandr-dev libxi-dev libxkbcommon-dev libwayland-dev
+    mesa-vulkan-drivers
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: 1.99.0
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y $LINUX_GL_DEPS
+      - name: Format
+        if: runner.os == 'Linux'
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Test
+        run: cargo test --workspace --locked
+
+  gate:
+    name: gate (${{ matrix.os }}, ${{ matrix.backend }})
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-22.04, macos-latest]
+        backend: [glow, wgpu]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: 1.99.0
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: ${{ matrix.backend }}
+      - name: Linux deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y $LINUX_GL_DEPS
+      - name: Build (glow)
+        if: matrix.backend == 'glow'
+        run: cargo build --release --locked
+      - name: Build (wgpu)
+        if: matrix.backend == 'wgpu'
+        run: cargo build --release --locked --no-default-features --features wgpu,bundled-mono
+      - name: Size gate (glow, hard)
+        if: matrix.backend == 'glow'
+        run: cargo xtask check-size --max-mb $MAX_SIZE_MB --label ${{ matrix.os }}-glow
+      - name: Size report (wgpu, report only)
+        if: matrix.backend == 'wgpu'
+        run: cargo xtask check-size --label ${{ matrix.os }}-wgpu
+      - name: Install Mesa llvmpipe (Windows, glow)
+        if: runner.os == 'Windows' && matrix.backend == 'glow'
+        shell: pwsh
+        run: |
+          # pal1000/mesa-dist-win 26.2.5, SHA-256 verified before extraction.
+          Invoke-WebRequest -Uri 'https://github.com/pal1000/mesa-dist-win/releases/download/26.2.5/mesa3d-26.2.5-release-msvc.7z' -OutFile mesa.7z
+          if ((Get-FileHash mesa.7z -Algorithm SHA256).Hash -ne '997123ef4ce8896204ab912d5b54f19372c487ff9835bcefafa2fca23b8953c2') { throw 'mesa hash mismatch' }
+          7z x mesa.7z -omesa
+          7z l mesa.7z | Select-String 'x64'
+          Copy-Item mesa/x64/opengl32.dll target/release/
+          Copy-Item mesa/x64/libgallium_wgl.dll target/release/
+          if (Test-Path mesa/x64/libglapi.dll) { Copy-Item mesa/x64/libglapi.dll target/release/ }
+      - name: Measure (Linux, Xvfb + llvmpipe)
+        if: runner.os == 'Linux'
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: >-
+          xvfb-run -a -s "-screen 0 1280x800x24 +extension GLX"
+          cargo xtask measure --runs 10
+          --max-startup-ms $CI_MAX_STARTUP_MS --max-rss-mb $CI_MAX_RSS_MB
+          --max-idle-cpu $CI_MAX_IDLE_CPU --label ${{ matrix.os }}-${{ matrix.backend }}
+      - name: Measure (Windows, llvmpipe best-effort)
+        if: runner.os == 'Windows'
+        continue-on-error: ${{ runner.os == 'Windows' }}
+        env:
+          GALLIUM_DRIVER: llvmpipe
+        shell: bash
+        run: >-
+          cargo xtask measure --runs 10
+          --max-startup-ms $CI_MAX_STARTUP_MS --max-rss-mb $CI_MAX_RSS_MB
+          --max-idle-cpu $CI_MAX_IDLE_CPU --label ${{ matrix.os }}-${{ matrix.backend }}
+      - name: Measure (macOS)
+        if: runner.os == 'macOS'
+        run: >-
+          cargo xtask measure --runs 10
+          --max-startup-ms $CI_MAX_STARTUP_MS --max-rss-mb $CI_MAX_RSS_MB
+          --max-idle-cpu $CI_MAX_IDLE_CPU --label ${{ matrix.os }}-${{ matrix.backend }}
+      - name: cargo bloat
+        if: matrix.os == 'ubuntu-22.04' && matrix.backend == 'glow'
+        continue-on-error: true
+        run: |
+          cargo install cargo-bloat --locked
+          mkdir -p target/measure
+          cargo bloat --release --crates -n 40 > target/measure/bloat-ubuntu-glow.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: measure-${{ matrix.os }}-${{ matrix.backend }}
+          path: target/measure/
+          if-no-files-found: warn
