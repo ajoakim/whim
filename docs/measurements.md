@@ -8,13 +8,13 @@ MB = MiB (1,048,576 bytes) everywhere in this project.
 | Metric | Project target | Phase 1 gate | CI threshold |
 |--------|----------------|--------------|--------------|
 | Stripped size | < ~15 MB | <= 10 MB | 10 MB hard |
-| Startup | ~200 ms cold | <= 300 ms | 2000 ms soft |
-| Idle RSS | tens of MB | <= 70 MB (settled working set) | 200 MB soft |
+| Startup | ~200 ms cold | <= 300 ms | 1300 ms soft |
+| Idle RSS | tens of MB | <= 70 MB (settled working set) | 180 MB soft |
 | Idle CPU | ~0 | < 1 % | 2 % soft |
 
 ## Method
 
-- Harness: `cargo xtask measure` (median of N runs, harness-side spawn-to-first-frame time; run 0 is reported separately as cold-ish; idle RSS and CPU are sampled for 10 s after the first frame plus a 2 s settle; RSS is the working set on Windows).
+- Harness: `cargo xtask measure` (median of N runs, harness-side spawn-to-first-frame time; run 0 is reported separately as cold-ish; idle RSS is the MINIMUM working set sampled once a second over +20 s..+30 s after launch (settled window; user decision 2026-10-31), the max seen including startup is reported separately as `idle_rss_peak_mb`; idle CPU is measured over the same window. Rows dated before the harness change used the old metric: max of samples at +2 s and +12 s).
 - Size: `cargo xtask check-size` on the stripped release binary.
 - The 20 GiB test file is a sparse file created by `cargo xtask sparse`; on-disk size stays under 100 MB.
 - CI is warm-only and uses software GL on Windows (Mesa llvmpipe) and Linux (Xvfb + llvmpipe), so CI runtime numbers are not representative of user hardware. Size is a hard CI limit; runtime thresholds in CI are generous.
@@ -23,8 +23,20 @@ MB = MiB (1,048,576 bytes) everywhere in this project.
 
 | Date | Phase | OS | Machine / runner | Backend | Features | Stripped size (MB) | Startup median (ms) | Startup max (ms) | In-app startup (ms) | Cold/Warm | Idle RSS (MB) | Idle CPU (%) | File | Source | Notes |
 |------|-------|----|------------------|---------|----------|--------------------|---------------------|------------------|---------------------|-----------|---------------|--------------|------|--------|-------|
-| 2026-10-31 | 1 | Windows 11 | Ryzen 9 5950X / Intel Arc B580 | glow | default (bundled-mono) | 5.0 | 265.7 | 435.5 | 254.0 | Warm | 92.8 | 0.2 | 20 GiB sparse | windows-local-glow | FAILS 60 MB RSS gate by harness; see Idle RSS diagnostic. Run 0 (435.5 ms) is the cold-ish run |
+| 2026-10-31 | 1 | Windows 11 | Ryzen 9 5950X / Intel Arc B580 | glow | default (bundled-mono) | 5.0 | 265.7 | 435.5 | 254.0 | Warm | 92.8 | 0.2 | 20 GiB sparse | windows-local-glow | OLD metric (max of +2 s/+12 s samples), 60 MB budget at the time; superseded by the settled row below. See Idle RSS diagnostic. Run 0 (435.5 ms) is the cold-ish run |
 | 2026-10-31 | 1 | Windows 11 | Ryzen 9 5950X / Intel Arc B580 | wgpu | wgpu,bundled-mono | 9.2 | 341.1 | 567.7 | 323.5 | Warm | 153.5 | 0.0 | 20 GiB sparse | windows-local-wgpu | Fails startup and RSS gates; no budgets passed to harness |
+| 2026-10-31 | 1 | Windows 11 | Ryzen 9 5950X / Intel Arc B580 | glow | default (bundled-mono) | 5.0 | 271.7 | 403.1 | 259.5 | Warm | 59.6 | 0.35 | 20 GiB sparse | windows-local-glow-settled | NEW metric (settled min +20..+30 s); peak incl. startup 90.7 MB; 70 MB budget passes. Run 0 403.1 ms |
+| 2026-10-31 | 1 | Linux | GitHub ubuntu-22.04 (Xvfb + llvmpipe) | glow | default | 6.6 | 145.9 | 1419.6 | 144.0 | Warm | 101.1 | 0.0 | 20 GiB sparse | ci-ubuntu-22.04-glow | CI software GL; OLD metric (run 41268608993) |
+| 2026-10-31 | 1 | Linux | GitHub ubuntu-22.04 (Xvfb + llvmpipe) | wgpu | wgpu,bundled-mono | 10.4 | 232.0 | 2469.7 | 229.5 | Warm | 117.9 | 0.0 | 20 GiB sparse | ci-ubuntu-22.04-wgpu | CI software GL; OLD metric; size report only |
+| 2026-10-31 | 1 | macOS | GitHub macos-latest (aarch64) | glow | default | 4.1 | 501.6 | 1630.8 | 435.5 | Warm | 106.2 | 0.75 | 20 GiB sparse | ci-macos-latest-glow | CI; OLD metric (run 41268608993) |
+| 2026-10-31 | 1 | macOS | GitHub macos-latest (aarch64) | wgpu | wgpu,bundled-mono | 6.6 | 260.8 | 1538.5 | 254.0 | Warm | 90.9 | 0.77 | 20 GiB sparse | ci-macos-latest-wgpu | CI; OLD metric |
+| 2026-10-31 | 1 | Windows | GitHub windows-latest (llvmpipe) | wgpu | wgpu,bundled-mono | 9.3 | 631.4 | 2569.1 | 611.5 | Warm | 54.4 | 0.0 | 20 GiB sparse | ci-windows-latest-wgpu | CI software GL; OLD metric. Windows glow job failed at size gate (pwsh did not expand $MAX_SIZE_MB, CI bug, fixed in 34d9163) |
+| 2026-10-31 | 1 | Linux | GitHub ubuntu-22.04 (Xvfb + llvmpipe) | glow | default | 6.6 | 144.6 | 1206.4 | 142.0 | Warm | 100.7 | 0.0 | 20 GiB sparse | ci2-ubuntu-22.04-glow | CI software GL; NEW settled metric (run 41269609008) |
+| 2026-10-31 | 1 | Linux | GitHub ubuntu-22.04 (Xvfb + llvmpipe) | wgpu | wgpu,bundled-mono | 10.4 | 233.3 | 943.4 | 231.0 | Warm | 118.0 | 0.0 | 20 GiB sparse | ci2-ubuntu-22.04-wgpu | CI software GL; NEW metric |
+| 2026-10-31 | 1 | macOS | GitHub macos-latest (aarch64) | glow | default | 4.1 | 192.2 | 770.6 | 184.5 | Warm | 102.7 | 0.0 | 20 GiB sparse | ci2-macos-latest-glow | CI; NEW metric (peak 105.9). Settled RSS exceeds 70 MB; startup varied 501.6 -> 192.2 ms between runs |
+| 2026-10-31 | 1 | macOS | GitHub macos-latest (aarch64) | wgpu | wgpu,bundled-mono | 6.6 | 273.9 | 1519.7 | 260.0 | Warm | 90.5 | 0.0 | 20 GiB sparse | ci2-macos-latest-wgpu | CI; NEW metric |
+| 2026-10-31 | 1 | Windows | GitHub windows-latest (llvmpipe) | glow | default | 5.0 | 355.2 | 820.6 | 322.5 | Warm | 81.6 | 0.0 | 20 GiB sparse | ci2-windows-latest-glow | CI software GL (not a NO-GO input); NEW metric |
+| 2026-10-31 | 1 | Windows | GitHub windows-latest (llvmpipe) | wgpu | wgpu,bundled-mono | 9.3 | 494.4 | 924.8 | 465.5 | Warm | 54.2 | 0.0 | 20 GiB sparse | ci2-windows-latest-wgpu | CI software GL; NEW metric |
 
 ## Size deltas
 
@@ -80,3 +92,11 @@ Recommendation:
 - Gate metric: define idle RSS as the settled working set, i.e. the minimum of samples taken in the window after startup has settled (>= +15 s), not the +2 s sample or the max. Measured against that, whim is 57.5-58.6 MB (passes 60 MB with ~2 MB margin on this machine), and the bare toolkit itself is 64 MB, so the 60 MB line is at the edge of what egui/glow can achieve here; consider whether 60 MB should be relaxed to about 70 MB for headroom across drivers (user decision, thresholds untouched).
 - Harness change (not made; `xtask/src/measure.rs` untouched): currently it sleeps 2 s, samples (a), sleeps `idle_secs` (default 10 s), samples (b), and reports `max(a, b)` as idle RSS at about +2 s and +12 s, which includes the transient. Change to: sleep ~20 s, then sample at +20 s and +30 s (or a few samples over 10 s) and report the min of that settled window. Keep the CPU delta over the same window.
 - Verdict remains PENDING; the user decides.
+
+## Size breakdown (ubuntu glow)
+
+Top crates from `cargo bloat --release --crates` (run 41268608993): std 760.7 KiB, egui 585.6 KiB, winit 449.6 KiB, harfrust 395.7 KiB, skrifa 328.3 KiB, vello_cpu 296.7 KiB, fearless_simd 259.4 KiB, wayland_client 207.5 KiB, epaint 195.1 KiB, read_fonts 164.9 KiB; whim itself 86.4 KiB.
+
+## accesskit
+
+glow + accesskit is 5.32 MB vs 5.01 MB default (+0.31 MB); see Size deltas.

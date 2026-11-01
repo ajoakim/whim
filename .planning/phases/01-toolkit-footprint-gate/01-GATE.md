@@ -1,12 +1,12 @@
 # Phase 1 Gate: egui/eframe (glow)
 
-**Verdict:** PENDING (local numbers in; CI, IME and HiDPI checks outstanding)
+**Verdict:** NO-GO — Slint 1.18.1 evaluation required before Phase 2
 
-**Draft status of the local evidence:** size and startup pass on real hardware. Idle RSS as measured by the harness (92.8 MB) FAILS the 60 MB threshold; a diagnostic puts the steady-state working set at about 58-64 MB, which is borderline and not clearly a pass. See "Idle RSS finding". Under the literal decision rule below, the harness figure on real hardware is a NO-GO input; the final verdict must be decided with that in view.
+**Basis:** applying the decision rule literally, the macOS CI runner (a NO-GO input) exceeds the 70 MB settled idle RSS budget: 102.7 MB for glow (run 41269609008, settled metric), 90.5 MB for wgpu. Windows real hardware passes everything (see Rationale). The user should review this verdict; see "Review note" under Rationale.
 
 ## Decision rule
 
-Thresholds (CONTEXT, locked): GO if startup <= 300 ms (target 200 ms), stripped binary <= 10 MB, idle RSS <= 60 MB on all OSes.
+Thresholds (CONTEXT, locked, amended once by the user, see Decisions): GO if startup <= 300 ms (target 200 ms), stripped binary <= 10 MB, idle RSS <= 70 MB on all OSes, measured as the settled working set (originally 60 MB with early samples).
 
 - NO-GO if the stripped glow binary exceeds 10 MB on any OS, or any threshold fails on real hardware (the local Windows machine).
 - A runtime-budget failure on the macOS CI runner is also a NO-GO input (real, Metal-backed GL).
@@ -17,25 +17,33 @@ Thresholds (CONTEXT, locked): GO if startup <= 300 ms (target 200 ms), stripped 
 
 ## Measured numbers
 
-Machine: AMD Ryzen 9 5950X, Intel Arc B580 (driver 32.0.101.6790), Windows 11, 20 GiB sparse file, warm.
+Local machine: AMD Ryzen 9 5950X, Intel Arc B580 (driver 32.0.101.6790), Windows 11, 20 GiB sparse file, warm. CI columns are from run 41269609008 (settled-RSS metric); Linux runs under Xvfb + llvmpipe, macOS is the GitHub macos-latest arm64 runner.
 
 | Metric | Threshold | Windows local glow | Windows local wgpu | Linux CI glow | macOS CI glow | Pass? |
 |--------|-----------|--------------------|--------------------|---------------|---------------|-------|
-| Stripped size | <= 10 MB | 5.01 MB | 9.24 MB | pending | pending | glow: yes (Windows) |
-| Startup median | <= 300 ms | 265.7 ms (max 435.5, first run 435.5; in-app median 254.0) | 341.1 ms (max 567.7) | pending | pending | glow: yes; wgpu: no |
-| Idle RSS (harness) | <= 60 MB | 92.8 MB | 153.5 MB | pending | pending | glow: NO; wgpu: NO |
-| Idle RSS (Get-Process steady state, +8 s) | <= 60 MB | WS 58.5-63.7 MB, private 57.9-60.2 MB | WS 89-108 MB, private 272-275 MB | n/a | n/a | glow: borderline |
-| Idle CPU | < 1 % | 0.16 % | 0.00 % | pending | pending | yes |
+| Stripped size | <= 10 MB | 5.01 MB | 9.24 MB | 6.60 MB | 4.07 MB | glow: yes on all OSes (Windows CI 5.0 MB) |
+| Startup median | <= 300 ms | 271.7 ms (max 403.1, in-app median 259.5) | 341.1 ms (max 567.7) | 144.6 ms (llvmpipe) | 192.2 ms (earlier run: 501.6 ms) | glow: yes on Windows; macOS passed in the later run but failed (501.6 ms) in the earlier one, so it is not stable |
+| Idle RSS (settled min, +20..+30 s) | <= 70 MB | 59.6 MB (startup peak 90.7) | not re-measured (old metric 153.5 MB) | 100.7 MB (llvmpipe, not a NO-GO input) | 102.7 MB (peak 105.9) | Windows glow: yes; macOS glow: NO |
+| Idle CPU | < 1 % | 0.35 % | 0.00 % | 0.00 % | 0.00 % | yes |
 
-Note: the Windows glow startup max equals the first run (435.5 ms); the median of 10 warm runs is within the 300 ms gate, but run-to-run spread (253-436 ms) means individual launches can exceed it.
+CI table, all jobs (run 41269609008 = NEW settled metric; run 41268608993 = OLD metric: max of +2 s/+12 s samples, 60 MB budget at the time):
+
+| Job | Size MB | Startup median ms (new / old) | Idle RSS MB (new / old) | Conclusion |
+|-----|---------|-------------------------------|-------------------------|------------|
+| ubuntu-22.04 glow | 6.60 | 144.6 / 145.9 | 100.7 / 101.1 | green |
+| ubuntu-22.04 wgpu | 10.36 | 233.3 / 232.0 | 118.0 / 117.9 | green (report only) |
+| macos-latest glow | 4.07 | 192.2 / 501.6 | 102.7 / 106.2 | green (soft CI thresholds) |
+| macos-latest wgpu | 6.58 | 273.9 / 260.8 | 90.5 / 90.9 | green |
+| windows-latest glow | 5.0 | 355.2 / n.a. | 81.6 / n.a. | old run: size gate step failed (CI bug, see CI); new run green |
+| windows-latest wgpu | 9.28 | 494.4 / 631.4 | 54.2 / 54.4 | green (llvmpipe) |
+
+The CI soft thresholds (startup/RSS) are generous runner limits, so a green job does not mean the 300 ms / 70 MB gate passed.
+
+Note: the Windows glow startup max equals run 0 (403.1 ms); the median of 10 warm runs is within the 300 ms gate, but run-to-run spread (257-403 ms) means individual launches can exceed it.
 
 ## Idle RSS finding
 
-- The harness reports 92.8 MB. A concurrent Get-Process poll on the same process shows WS 92 MB / commit 132 MB during the harness sample window, dropping to WS 61 MB / commit 101 MB shortly after (transient startup memory not yet trimmed). Harness samples at +2 s and +12 s and takes the max, so it captures the untrimmed value.
-- Steady-state WS with no file: 63.7 MB; with the 20 GiB file: 58.5 MB; with `--ppp 1.0`: 57.7 MB. The mmap does not contribute (difference is noise).
-- Peak working set at startup is 101-106 MB.
-- GPU is Intel Arc B580, driver 32.0.101.6790. The Intel OpenGL ICD loaded into the process is the likely major contributor, but this was not isolated (no minimal eframe window experiment was run, and no product code was changed).
-- Honest status: idle RSS does NOT pass by the harness metric; steady state sits at or just under the line (about 58-64 MB). The metric definition (working set sampled early vs after trimming) matters more than the toolkit here, and needs a decision from the user. No thresholds were changed.
+Resolved by a user decision (see Decisions). The 92.8 MB figure from the original harness was a startup transient; about 30 MB of private memory is genuinely freed around +7-8 s. Steady-state working set is 57.5-59.6 MB for whim and 64 MB for a bare eframe window, so the floor is toolkit plus GPU driver. Details in "Idle RAM isolation" below. The harness now reports the settled minimum (+20..+30 s) as `idle_rss_mb` and the max including startup as `idle_rss_peak_mb`.
 
 ## glow vs wgpu
 
@@ -43,14 +51,14 @@ Note: the Windows glow startup max equals the first run (435.5 ms); the median o
 |---|------|------|-------|
 | Size | 5.01 MB | 9.24 MB | +4.23 MB |
 | Startup median | 265.7 ms | 341.1 ms | +75 ms |
-| Idle RSS (harness) | 92.8 MB | 153.5 MB | +61 MB |
+| Idle RSS (old harness metric) | 92.8 MB | 153.5 MB | +61 MB |
 | Private bytes (steady) | ~58-60 MB | ~272 MB | +~213 MB |
 
-glow is smaller, faster to start and much lighter in memory; wgpu fails startup and RSS and nearly exhausts the size budget. Recommendation: glow stays the default; wgpu remains an optional cargo feature only.
+glow is smaller, faster to start and much lighter in memory; wgpu fails startup and RSS and nearly exhausts the size budget. Recommendation: glow stays the default; wgpu remains an optional cargo feature only. (On the macOS runner wgpu is also over the RSS line, 90.5 MB.)
 
 ## IME supported scope
 
-- Windows Japanese (Microsoft IME): pending manual test
+- Windows Japanese (Microsoft IME): PASS on all steps (user-tested). Preedit underline shown, candidate window directly under the caret, Space then Enter commits 日本語, Esc cancels the composition.
 - macOS: unverified
 - Linux X11/Wayland (ibus/fcitx): unverified
 - Known limits: probe caret only; real text editing and caret handling are Phase 3.
@@ -59,21 +67,48 @@ glow is smaller, faster to start and much lighter in memory; wgpu fails startup 
 
 | Check | Result |
 |-------|--------|
-| 100% | pending |
-| 125% | pending |
-| 150% | pending |
-| 200% | pending |
-| Drag between monitors | pending |
+| 100% | pass (crisp, even rows) |
+| 125% | pass (crisp, even rows) |
+| 150% | pass (crisp, even rows) |
+| 200% | pass (crisp, even rows) |
+| Drag between monitors | not tested (user reported the four scale checks only) |
 
 Unit-test proxy: `view::snap` tests pass.
 
 ## CI
 
-pending first push. Thresholds currently in ci.yml: MAX_SIZE_MB 10 (hard), startup 2000 ms soft, RSS 200 MB soft, idle CPU 2 % soft. The repo has no git remote yet.
+Repo: https://github.com/ajoakim/whim (private). Runs:
+
+- 41268608993 (OLD idle metric, 60 MB budget): test jobs green on all 3 OSes; gate macOS glow/wgpu, Linux glow/wgpu and Windows wgpu green; gate Windows glow FAILED at "Size gate (glow, hard)". Root cause was a CI bug, not binary size: the step ran under PowerShell, where `$MAX_SIZE_MB` is not an environment reference, so `--max-mb` swallowed `--label` ("invalid float literal"). Local Windows glow is 5.01 MB. Fixed with `shell: bash` on the size steps (34d9163).
+- 41269609008 (NEW settled metric): all 9 jobs green, including Windows glow (5.0 MB).
+
+CI thresholds lowered from baselines (never raised; `MAX_SIZE_MB: "10"` unchanged): `CI_MAX_STARTUP_MS` 2000 -> 1300 (max observed CI median 631.4 ms x 2, rounded up to 100); `CI_MAX_RSS_MB` 200 -> 180 (max observed 118.0 MB x 1.5, rounded up to 10); `CI_MAX_IDLE_CPU` 2.0 unchanged. Linux and Windows CI runtime numbers come from software GL and are not NO-GO inputs (Windows runtime is also continue-on-error); macOS runtime is.
 
 ## Cold start
 
-pending (filled in Task 3). Run 0 of the warm series (435.5 ms) is only a cold-ish indicator, not a reboot cold start.
+cold not measured, warm-only
+
+Run 0 of the warm series (403.1 ms) is only a cold-ish indicator, not a reboot cold start.
+
+## Decisions
+
+- **Idle RAM metric and budget (USER DECISION, 2026-10-31, overrides the plan rule that thresholds may only be lowered):** the gate metric is the settled working set (minimum over +20..+30 s after launch) and the budget is 70 MB, raised from 60 MB. Rationale: the isolation diagnostic showed the original 92.8 MB was a startup transient freed at about +7-8 s; whim settles at 57.5-58.6 MB and bare eframe at 64 MB, so the floor is toolkit plus GPU driver and Slint would not obviously help. Old 60 MB / early-sample numbers stay in the tables, labelled OLD.
+- **Cold start:** not measured (no reboot); recorded as warm-only.
+
+## Rationale
+
+Windows real hardware passes every threshold under the decision rule as amended: glow is 5.01 MB (limit 10), median startup 271.7 ms (limit 300; spread 257-403 ms), settled idle RSS 59.6 MB (limit 70; startup peak 90.7 MB), idle CPU 0.35 %. glow beats wgpu (9.24 MB, 341 ms, 153.5 MB on the old metric). Windows IME and HiDPI manual checks pass.
+
+The decision rule makes a runtime-budget failure on the macOS CI runner a NO-GO input. On the settled metric the macOS glow idle RSS is 102.7 MB (wgpu 90.5 MB), above 70 MB, and the earlier run measured macOS glow startup median 501.6 ms (above 300 ms) although the later run gave 192.2 ms. The literal verdict is therefore NO-GO, with Slint 1.18.1 as the fallback toolkit to evaluate before Phase 2.
+
+**Review note:** this NO-GO rests on macOS RSS (and one noisy startup run). Caveats the user may weigh: the macOS runner is a virtualized arm64 VM; resident size on macOS includes shared framework pages (AppKit/Metal) and is not directly comparable to the Windows working set; wgpu is also over 70 MB there, so the cost is not specific to glow; and the Windows isolation finding (floor is toolkit plus driver) suggests Slint may not do better. If the user judges the macOS figure a measurement artifact, the alternative reading is GO (provisional) with a real-hardware macOS measurement as a blocking open item (PERF-05: unverified (provisional verdict); Linux/macOS startup and idle RSS numbers). That is the user's call; this document does not soften the literal result.
+
+Open items regardless of verdict:
+
+- Real-hardware macOS and Linux startup and idle RSS numbers (CI only so far).
+- Cold start never measured on Windows.
+- Drag between monitors with different DPI untested.
+- macOS and Linux IME unverified.
 
 ## Risks carried forward
 
@@ -82,11 +117,12 @@ pending (filled in Task 3). Run 0 of the warm series (435.5 ms) is only a cold-i
 - CI software GL is not representative of user hardware.
 - Accessibility of the custom-painted view.
 - accesskit size vs accessibility: glow + accesskit is 5.32 MB vs 5.01 MB default (+0.31 MB, `size-windows-local-glow-accesskit.json` minus `size-windows-local-glow.json`), so it still fits well under 10 MB. It is off by default to save size, so menus, tabs and the status bar get no screen-reader exposure until it is enabled. The cost is small enough that enabling it by default should be reconsidered.
-- Idle RSS metric definition and GPU driver contribution (see Idle RSS finding).
+- Idle RSS: the Windows metric question is resolved (Decisions); the macOS floor of about 100 MB is the open problem.
+- macOS startup is noisy on the CI runner (501.6 ms vs 192.2 ms between runs).
 
 ## Idle RAM isolation (2026-10-31)
 
-Method: PowerShell `Get-Process` polled every 1 s for 40 s per build (WorkingSet64 / PrivateMemorySize64; PagedMemorySize64 was identical to private in every sample). Machine as above (Intel Arc B580, driver 32.0.101.6790). Bare app = `target/diag/bare-eframe/` (own workspace, eframe 0.37.0 glow + default_fonts, same release profile, explicit `Renderer::Glow`, one label, no custom painting). Mesa = copy of whim.exe in `target/diag/mesa/` with pal1000 mesa 26.2.5 `opengl32.dll` + `libgallium_wgl.dll` (archive SHA-256 verified).
+Method: PowerShell `Get-Process` polled every 1 s for 40 s per build (WorkingSet64 / PrivateMemorySize64; PagedMemorySize64 was identical to private in every sample). Machine as above. Bare app = `target/diag/bare-eframe/` (own workspace, eframe 0.37.0 glow + default_fonts, same release profile, explicit `Renderer::Glow`, one label, no custom painting). Mesa = copy of whim.exe in `target/diag/mesa/` with pal1000 mesa 26.2.5 `opengl32.dll` + `libgallium_wgl.dll` (archive SHA-256 verified).
 
 | build | WS peak | WS settled | private settled | settle time |
 |-------|---------|------------|-----------------|-------------|
@@ -96,17 +132,8 @@ Method: PowerShell `Get-Process` polled every 1 s for 40 s per build (WorkingSet
 | whim glow + Mesa llvmpipe | 115.8 MB | 115.8 MB | 104.5 MB | no drop in 40 s |
 
 Findings:
-- The drop is a real release, not a working-set trim: private bytes fall in lockstep with the working set (whim no file 90.9 -> 59.0; bare 91.3 -> 59.4). A pure trim would leave private flat. The ~30 MB is startup-transient allocations freed ~7-8 s after launch (likely driver/GL init or font/atlas upload staging), then settled.
-- Settle time is about +7-8 s from launch in all three real-GPU builds. The harness samples at +2 s and +12 s; +2 s is inside the transient and is what produces 92.8 MB. The +12 s sample is already settled.
-- The 20 GiB file adds no working set. It does add about 40 MB of private/commit (99 vs 59 MB) while WS is unchanged; that is accounting for the mapping (file-backed section charged to commit), not resident RAM. Worth noting if commit were ever used as the metric.
-- Not skipped: no non-eframe GL baseline (winit + glutin) was built; the bare-eframe result already separates toolkit from whim.
 
-Attribution (settled WS):
-- egui/eframe + GL driver base: about 64 MB (bare eframe), same transient peak (~97 MB) and same +8 s settle. This is essentially the whole cost.
-- whim's own additions: about -6 MB vs the bare app (57.5 vs 64.0), i.e. nothing measurable; the difference is within run noise and the bundled mono font vs default layout. Whim adds no meaningful idle RAM.
-- GL driver vs egui split: not cleanly separable. Software GL (Mesa llvmpipe) is much larger (116 MB, no release), so it cannot be used to subtract the Intel ICD; it shows only that the driver choice swings the number by tens of MB. The Intel ICD plus egui together account for the ~58-64 MB floor; the toolkit choice cannot reduce it much. Slint was not tested.
-
-Recommendation:
-- Gate metric: define idle RSS as the settled working set, i.e. the minimum of samples taken in the window after startup has settled (>= +15 s), not the +2 s sample or the max. Measured against that, whim is 57.5-58.6 MB (passes 60 MB with ~2 MB margin on this machine), and the bare toolkit itself is 64 MB, so the 60 MB line is at the edge of what egui/glow can achieve here; consider whether 60 MB should be relaxed to about 70 MB for headroom across drivers (user decision, thresholds untouched).
-- Harness change (not made; `xtask/src/measure.rs` untouched): currently it sleeps 2 s, samples (a), sleeps `idle_secs` (default 10 s), samples (b), and reports `max(a, b)` as idle RSS at about +2 s and +12 s, which includes the transient. Change to: sleep ~20 s, then sample at +20 s and +30 s (or a few samples over 10 s) and report the min of that settled window. Keep the CPU delta over the same window.
-- Verdict remains PENDING; the user decides.
+- The drop is a real release, not a working-set trim: private bytes fall in lockstep with the working set. About 30 MB of startup-transient allocations are freed about 7-8 s after launch.
+- The 20 GiB file adds no working set; it adds about 40 MB of commit (file-backed section accounting), not resident RAM.
+- Attribution: egui/eframe plus the GL driver is about 64 MB (bare eframe); whim's own additions are not measurable. Software GL (Mesa llvmpipe) is much larger (116 MB), so driver choice swings the number by tens of MB. Slint was not tested.
+- Outcome: the harness now measures the settled minimum (+20..+30 s); local re-run gives 59.6 MB (peak 90.7 MB).

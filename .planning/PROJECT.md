@@ -67,7 +67,7 @@ Any file, of any size, opens instantly and can be viewed and edited without the 
 
 - **Tech stack**: Rust — no GC, mmap-friendly, small static binaries; Go GUI options are heavier or webview-based
 - **Platforms**: Windows, Linux, macOS — all three are first-class
-- **Performance**: < ~200 ms cold startup; < 1 s to first page of a 20 GB file; idle RAM in tens of MB
+- **Performance**: < ~200 ms cold startup; < 1 s to first page of a 20 GB file; idle RAM in tens of MB (defined as the settled working set, i.e. the minimum over a window >= 20 s after launch, budget <= 70 MB; the ~90 MB startup transient is reported only; user decision 2026-10-31)
 - **Footprint**: single portable binary on Windows/Linux, target < ~15 MB, no runtime/installer dependency; macOS ships as an unsigned `.app` bundle (Apple requires a bundle for "Open with"; signing deferred to v2)
 - **Memory model**: never read a whole file into memory; all views (text, hex, search) must work over mmap/chunks
 - **UI**: minimal — tabs + editor + status bar, menus for everything else
@@ -82,6 +82,8 @@ Any file, of any size, opens instantly and can be viewed and edited without the 
 | Hex v1 = view + byte overwrite | Covers the user's need; full hex editor deferred | — Pending |
 | Binary files open as text first | User preference; manual switch to hex | — Pending |
 | Minimal UI | User preference: tabs + editor + status bar | — Pending |
+| Idle RAM = settled working set, budget 70 MB (was 60) | Isolation diagnostic: the 92.8 MB figure was a ~7 s startup transient; whim settles at 57.5-58.6 MB and bare eframe at 64 MB, so the floor is toolkit + GPU driver (user decision 2026-10-31) | Adopted |
+| egui/eframe (glow) go/no-go (Phase 1 gate) | Windows: 5.0 MB, 272 ms, 59.6 MB settled pass. macOS CI runner: settled idle RSS 102.7 MB exceeds 70 MB, so the literal rule gives NO-GO; see 01-GATE.md | NO-GO per literal rule, pending user review |
 
 ## Evolution
 

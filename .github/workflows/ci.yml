@@ -13,8 +13,8 @@ env:
   # MB = MiB (1,048,576 bytes). Size is a hard limit; runtime thresholds are generous
   # runner-level limits (software GL). Plan 05 records real baselines.
   MAX_SIZE_MB: "10"
-  CI_MAX_STARTUP_MS: "2000"
-  CI_MAX_RSS_MB: "200"
+  CI_MAX_STARTUP_MS: "1300"
+  CI_MAX_RSS_MB: "180"
   CI_MAX_IDLE_CPU: "2.0"
   LINUX_GL_DEPS: >-
     xvfb libgl1-mesa-dri libglx-mesa0 libegl1 libxkbcommon-x11-0 libx11-dev
