@@ -205,7 +205,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-02 | Phase 8 | Pending |
 | UI-03 | Phase 8 | Pending |
 | PERF-03 | Phase 8 | Pending |
-| PERF-04 | Phase 8 | Pending |
+| PERF-04 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 62 total

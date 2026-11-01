@@ -52,7 +52,7 @@ Plans:
 ### Phase 2: Core Storage & Read-Only Viewers
 **Goal**: User can open a file of any size and immediately scroll, jump and inspect it in text or hex, with the whole file never loaded into memory
 **Depends on**: Phase 1
-**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, HEX-01, HEX-03, HEX-05, UI-01, UI-05, OPEN-02, OPEN-09, EDIT-10
+**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, HEX-01, HEX-03, HEX-05, UI-01, UI-05, OPEN-02, OPEN-09, EDIT-10, PERF-04
 **Success Criteria** (what must be TRUE):
   1. User opens a file of tens of GB and sees its first page in under 1 second, with RAM use independent of file size
   2. User scrolls smoothly through the file immediately, before line indexing finishes, sees indexing progress in the status bar, and line numbers become exact on completion
@@ -132,7 +132,7 @@ Plans:
 ### Phase 8: OS Integration, Preferences & Release
 **Goal**: Whim behaves as a default file-opening app on all three OSes, remembers the user's session and preferences, and ships as small portable builds
 **Depends on**: Phase 5
-**Requirements**: OPEN-03, OPEN-04, OPEN-05, OPEN-06, OPEN-07, UI-02, UI-03, PERF-03, PERF-04
+**Requirements**: OPEN-03, OPEN-04, OPEN-05, OPEN-06, OPEN-07, UI-02, UI-03, PERF-03
 **Success Criteria** (what must be TRUE):
   1. User can open files by running `whim <file>`, and a second launch (or drag & drop / File > Open while running) adds a tab to the running window
   2. User can register Whim for "Open with" / file associations on Windows, Linux and macOS, and double-clicking an associated file opens it
