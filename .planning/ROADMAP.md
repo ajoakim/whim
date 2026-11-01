@@ -34,10 +34,17 @@ Whim is built core-first. Phase 1 is a gate: it proves the toolkit and footprint
 **Plans**: 5 plans
 
 Plans:
+**Wave 1**
 - [ ] 01-01-PLAN.md — Workspace scaffold (toolchain 1.99.0, glow/wgpu features, xtask stub) + tested byte-offset row model and pixel snapping
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-02-PLAN.md — eframe 0.37 walking skeleton: args, startup clock, read-only mmap, app shell, virtualized view, bench stdout contract
 - [ ] 01-03-PLAN.md — xtask harness (sparse 20 GiB, check-size, measure) + 3-OS x 2-backend CI workflow + docs/measurements.md
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01-04-PLAN.md — IME probe wiring (preedit/commit/IMEOutput) + glow/wgpu build and harness smoke
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-05-PLAN.md — Local measurements, manual IME/HiDPI/CI checkpoint, final go/no-go in 01-GATE.md
 **UI hint**: yes
 
