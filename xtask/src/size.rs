@@ -40,6 +40,9 @@ fn parse(args: &mut lexopt::Parser) -> Result<Option<Parsed>, lexopt::Error> {
             other => return Err(other.unexpected()),
         }
     }
+    if !crate::valid_label(&label) {
+        return Err("--label must match [A-Za-z0-9._-]+".into());
+    }
     Ok(Some((bin, max_mb, label)))
 }
 

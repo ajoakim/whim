@@ -69,12 +69,53 @@ fn set_sparse(_f: &std::fs::File, _path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn write_at(f: &mut std::fs::File, len: u64, off: u64, data: &[u8]) -> std::io::Result<()> {
-    if off + data.len() as u64 <= len {
-        f.seek(SeekFrom::Start(off))?;
-        f.write_all(data)?;
+const MIDDLE: &[u8] = b"WHIM-MIDDLE
+";
+const END: &[u8] = b"WHIM-END
+";
+/// The end marker starts this many bytes before EOF.
+const END_BACK: u64 = 16;
+
+fn head_bytes() -> String {
+    let mut head = String::from(
+        "WHIM-START
+",
+    );
+    for i in 0..40 {
+        head.push_str(&format!(
+            "line {i:02}: whim sparse test file
+"
+        ));
     }
-    Ok(())
+    head
+}
+
+/// Marker offsets `(mid_off, end_off)` for a file of `len` bytes, or an error when the
+/// markers would not fit or would overlap each other.
+fn marker_layout(len: u64, head_len: u64) -> Result<(u64, u64), String> {
+    let mid = len / 2;
+    let end = len.saturating_sub(END_BACK);
+    if len < END_BACK || mid < head_len || mid + MIDDLE.len() as u64 > end {
+        return Err(format!(
+            "size {len} is too small for the marker layout (head {head_len} B, middle, end)"
+        ));
+    }
+    if end + END.len() as u64 > len {
+        return Err("end marker does not fit".into());
+    }
+    Ok((mid, end))
+}
+
+/// Write `data` at `off`; errors (never silently skips) if it would run past `len`.
+fn write_at(f: &mut std::fs::File, len: u64, off: u64, data: &[u8]) -> std::io::Result<()> {
+    if off.checked_add(data.len() as u64).is_none_or(|e| e > len) {
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            format!("marker at {off} does not fit in a {len}-byte file"),
+        ));
+    }
+    f.seek(SeekFrom::Start(off))?;
+    f.write_all(data)
 }
 
 pub fn create(path: &Path, len: u64, force: bool) -> std::io::Result<()> {
@@ -99,13 +140,12 @@ pub fn create(path: &Path, len: u64, force: bool) -> std::io::Result<()> {
     // Must precede set_len/writes, or NTFS zero-fills the gap.
     set_sparse(&f, path)?;
     f.set_len(len)?;
-    let mut head = String::from("WHIM-START\n");
-    for i in 0..40 {
-        head.push_str(&format!("line {i:02}: whim sparse test file\n"));
-    }
+    let head = head_bytes();
+    let (mid, end) = marker_layout(len, head.len() as u64)
+        .map_err(|e| Error::new(ErrorKind::InvalidInput, e))?;
     write_at(&mut f, len, 0, head.as_bytes())?;
-    write_at(&mut f, len, len / 2, b"WHIM-MIDDLE\n")?;
-    write_at(&mut f, len, len.saturating_sub(16), b"WHIM-END\n")?;
+    write_at(&mut f, len, mid, MIDDLE)?;
+    write_at(&mut f, len, end, END)?;
     f.flush()?;
     Ok(())
 }
@@ -148,7 +188,12 @@ fn parse_args(args: &mut lexopt::Parser) -> Result<Option<(u64, bool, PathBuf)>,
             }
             Long("force") => force = true,
             Long("help") | Short('h') => return Ok(None),
-            Value(v) => path = Some(PathBuf::from(v)),
+            Value(v) => {
+                if path.is_some() {
+                    return Err("only one <path> is allowed".into());
+                }
+                path = Some(PathBuf::from(v));
+            }
             other => return Err(other.unexpected().to_string()),
         }
     }
@@ -238,6 +283,27 @@ mod tests {
         }
         drop(f);
         std::fs::remove_file(&p).unwrap();
+    }
+
+    #[test]
+    fn marker_layout_rejects_small_and_overlap() {
+        let head = head_bytes().len() as u64;
+        assert!(marker_layout(10, head).is_err());
+        assert!(marker_layout(head + 8, head).is_err());
+        assert!(marker_layout(1 << 20, head).is_ok());
+    }
+
+    #[test]
+    fn small_file_is_an_error_not_a_silent_skip() {
+        let p = tmp("small");
+        assert!(create(&p, 64, false).is_err());
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn two_positionals_rejected() {
+        let mut p = lexopt::Parser::from_args(["--size", "1MiB", "a", "b"]);
+        assert!(parse_args(&mut p).is_err());
     }
 
     #[test]

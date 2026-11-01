@@ -27,3 +27,26 @@ pub fn measure_dir() -> PathBuf {
     let _ = std::fs::create_dir_all(&d);
     d
 }
+
+/// `--label` ends up in file names: allow only `[A-Za-z0-9._-]`, non-empty.
+pub fn valid_label(s: &str) -> bool {
+    !s.is_empty()
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::valid_label;
+
+    #[test]
+    fn labels_are_filename_safe() {
+        assert!(valid_label("windows-latest-glow"));
+        assert!(valid_label("a.b_c-1"));
+        assert!(!valid_label(""));
+        assert!(!valid_label("../x"));
+        assert!(!valid_label("a/b"));
+        assert!(!valid_label(r"a\b"));
+        assert!(!valid_label("a b"));
+    }
+}

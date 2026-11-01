@@ -133,6 +133,9 @@ fn parse(args: &mut lexopt::Parser) -> Result<Option<Opts>, lexopt::Error> {
             other => return Err(other.unexpected()),
         }
     }
+    if !crate::valid_label(&o.label) {
+        return Err("--label must match [A-Za-z0-9._-]+".into());
+    }
     if o.runs == 0 {
         return Err("--runs must be at least 1".into());
     }
