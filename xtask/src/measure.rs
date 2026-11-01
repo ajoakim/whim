@@ -11,6 +11,18 @@ const MIB: f64 = 1_048_576.0;
 /// Idle sampling starts this many seconds after launch (startup transient is gone by then).
 const SETTLE_START_SECS: u64 = 20;
 
+/// Why a run's settled window cannot be trusted; `None` means it is valid.
+/// An empty window or an early child exit must never read as a passing gate.
+pub fn window_problem(win_fp: &[f64], child_exited: bool) -> Option<&'static str> {
+    if child_exited {
+        Some("whim exited during the idle window")
+    } else if win_fp.is_empty() {
+        Some("no samples were taken in the settled idle window")
+    } else {
+        None
+    }
+}
+
 /// Minimum of the settled-window samples (the gate metric); 0 when empty.
 pub fn window_min(v: &[f64]) -> f64 {
     v.iter().cloned().reduce(f64::min).unwrap_or(0.0)
@@ -407,6 +419,7 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
             let mut cpu_first: Option<u64> = None;
             let mut cpu_last: Option<(u64, Instant)> = None;
             let mut cpu_t0 = Instant::now();
+            let mut child_exited = false;
             let start = Duration::from_secs(SETTLE_START_SECS);
             let end = start + Duration::from_secs(o.idle_secs);
             // One early sample so the reported peak includes the startup transient.
@@ -421,6 +434,10 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
                     break;
                 }
                 if el >= start {
+                    if matches!(child.try_wait(), Ok(Some(_))) {
+                        child_exited = true;
+                        break;
+                    }
                     match snapshot(&mut sys, pid) {
                         Some(m) => {
                             all_rss.push(m.rss);
@@ -438,14 +455,22 @@ fn run_inner(o: &Opts, bin: &PathBuf, file: &PathBuf, file_len: u64) -> ExitCode
                             cpu_last = Some((m.cpu_ms, Instant::now()));
                         }
                         None => {
-                            eprintln!(
-                                "warning: could not sample process (exited during idle window?)"
-                            );
+                            child_exited = matches!(child.try_wait(), Ok(Some(_)));
+                            eprintln!("warning: could not sample process");
                             break;
                         }
                     }
                 }
                 std::thread::sleep(Duration::from_secs(1));
+            }
+            if matches!(child.try_wait(), Ok(Some(_))) {
+                child_exited = true;
+            }
+            if let Some(why) = window_problem(&win_fp, child_exited) {
+                eprintln!("error: {why}; refusing to report a passing result");
+                let _ = child.kill();
+                let _ = child.wait();
+                return ExitCode::from(2);
             }
             idle_rss = window_min(&win_rss);
             idle_fp = window_min(&win_fp);
@@ -599,6 +624,13 @@ mod tests {
     fn window_min_is_minimum() {
         assert_eq!(window_min(&[60.0, 58.0, 59.5]), 58.0);
         assert_eq!(window_min(&[]), 0.0);
+    }
+
+    #[test]
+    fn empty_window_or_early_exit_is_invalid() {
+        assert!(window_problem(&[], false).is_some());
+        assert!(window_problem(&[50.0], true).is_some());
+        assert!(window_problem(&[50.0], false).is_none());
     }
 
     #[test]
