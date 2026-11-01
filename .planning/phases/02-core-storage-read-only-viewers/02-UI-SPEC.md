@@ -1,7 +1,8 @@
 ---
 phase: 2
 slug: core-storage-read-only-viewers
-status: draft
+status: approved
+reviewed_at: 2026-11-01
 shadcn_initialized: false
 preset: none
 created: 2026-11-01
@@ -46,10 +47,10 @@ Phase 1 scale holds (4/8/16/24). Phase 2 additionally uses xl and 2xl.
 |-------|-------|---------------|
 | xs | 4 | gap between status segment text and divider; banner button vertical padding |
 | sm | 8 | gutter-to-text gap; banner inner gap; dialog button gap |
-| md | 16 | gutter left padding; content left inset (text starts 16pt after gutter's right edge divider region, see below); dialog body spacing |
+| md | 16 | gutter left padding; content left inset (text starts 8pt after the gutter divider line, see Gutter); dialog body spacing |
 | lg | 24 | tab strip height; banner height; hex column group gap |
 | xl | 32 | dialog inner margin |
-| 2xl | 48 | hex offset-to-bytes column gap is NOT this; used only for Ctrl+G box width padding (see Go-to) |
+| 2xl | 48 | not used in Phase 2 |
 | 3xl | 64 | not used |
 
 Exceptions: row height remains 20pt (14 x 1.4). Progress bar 2pt high and divider/border strokes 1pt are strokes, not spacing. Drop-affordance border 2pt stroke.
@@ -123,7 +124,7 @@ Banner uses `SECONDARY` fill and `SEPARATOR` 1pt bottom border (not accent, not 
 
 ### Word wrap rendering (D-04, D-05)
 - Wrap ON default; wraps at content width = viewer width - gutter - 16pt right inset, at word boundaries where possible, else at character boundary.
-- Hard break at 10,000 chars regardless of wrap setting. Wrap OFF: lines truncate at 10,000-char rows, horizontal scrolling is NOT provided in Phase 2 (each over-wide line shows as one row up to the viewport edge; content beyond is reachable only by turning wrap on). Default; flag as known limitation, and show it in the View menu tooltip: "Lines longer than the window are cut off when wrap is off."
+- Hard break at 10,000 chars regardless of wrap setting. Wrap OFF (D-20, user decision): the text view scrolls horizontally. A horizontal scrollbar (same style as the vertical one, 8pt thick, along the bottom edge of the content area, hidden when nothing overflows) appears; Shift+wheel and trackpad horizontal swipe scroll sideways; Left/Right moving the caret past the viewport edge auto-scrolls. Scrollable width = widest visible row, bounded by the 10,000-char row cap. The gutter stays fixed while content scrolls.
 - Auto-disable when file > 64 MB: status bar left notice "Word wrap off for large files" (Label 12, `MUTED`) shown 6 s then fades out by simply disappearing (no animation, one `request_repaint_after(6s)`); View > Word wrap shows unchecked and remains toggleable.
 - Row layout rule: layout only viewport rows + 1; row Y pixel-snapped via existing `view/snap.rs`.
 - Control chars and invalid bytes render as `·` in `MUTED_DIM` (Phase 1 rule, retained). Tabs render as 4 cells (default).
@@ -139,7 +140,7 @@ Banner uses `SECONDARY` fill and `SEPARATOR` 1pt bottom border (not accent, not 
 - Bytes: two groups of 8, `XX` separated by 1 cell (`w`); 24pt gap between groups; 16pt gap to ASCII.
 - ASCII column: 16 cells, printable 0x20..0x7E as-is, others `·` `MUTED_DIM`; no `|` delimiters drawn, a 1pt `SEPARATOR` vertical line at its left edge.
 - Column header row: none (default; minimal). Offset header omitted.
-- Total min width ≈ 16 + 16w+16 + 16w + 15w + 24 + 16 + 16w ≈ 63 cells + 72pt; at JetBrains Mono 14 (w≈8.4pt) ≈ 600pt. Below that width the view scrolls horizontally is NOT supported; content clips at the right edge (min window 480 shows ASCII partially; default window 1024 fine). Default.
+- Total min width ≈ 16 + 16w+16 + 16w + 15w + 24 + 16 + 16w ≈ 63 cells + 72pt; at JetBrains Mono 14 (w≈8.4pt) ≈ 600pt. Below that width the hex view uses the same horizontal scrollbar as wrap-off text (offset column stays fixed).
 - Switching text<->hex (Ctrl+H) preserves byte position: the top visible row's start byte maps to the hex row containing it, and back to the logical line containing it. Gutter toggle does not affect hex.
 - Hex view is available for any file; word wrap and line numbers menu items are disabled (greyed) while in hex view.
 
@@ -167,7 +168,7 @@ Banner uses `SECONDARY` fill and `SEPARATOR` 1pt bottom border (not accent, not 
 ### Copy-size confirm dialog (D-14)
 - Modal `egui::Window`, centered, fixed width 400pt (default), 32pt inner margin (xl), `OVERLAY_SCRIM` behind, fill `SECONDARY` with `SEPARATOR` 1pt border (default).
 - Title "Copy large selection?". Body: "The selection is {size}. Copying it may take a moment and use that much memory." Hard-cap variant (> 256 MB, no copy buttons): body "The selection is {size}, which is over the 256 MB copy limit. Select a smaller range." (size in destructive colour), single button "OK".
-- Buttons right-aligned, 8pt gap: "Cancel" (secondary) and "Copy {size}" (primary, accent text, Enter-activates). Esc = Cancel.
+- Buttons right-aligned, 8pt gap: "Don't Copy" (secondary) and "Copy {size}" (primary, accent text, Enter-activates). Esc = Don't Copy.
 - Progress for the copy itself appears in the status bar (D-12) with ✕.
 
 ### "File changed on disk" error state (D-01)
@@ -234,10 +235,10 @@ Also: Ctrl+A select all, Ctrl+C copy (not in menus; no Edit menu until Phase 3).
 | Wrap notice | "Word wrap off for large files" |
 | Indexing | "Indexing {n}%" ; tooltip "Cancel indexing (Esc)"; "Indexing cancelled" |
 | Drop overlay | "Drop to open {filename}" |
-| Copy confirm | Title "Copy large selection?"; body per dialog above; buttons "Cancel" / "Copy {size}" |
-| Copy over cap | "The selection is {size}, which is over the 256 MB copy limit. Select a smaller range." / "OK" |
+| Copy confirm | Title "Copy large selection?"; body per dialog above; buttons "Don't Copy" / "Copy {size}" |
+| Copy over cap | "The selection is {size}, which is over the 256 MB copy limit. Select a smaller range." / "Close" |
 | Destructive actions | none in Phase 2 (read-only); copy confirm is a size warning, not destructive |
-| Disabled tooltips | "Open a file first" (View items with no file); "Not available in hex view" (wrap, line numbers) |
+| Disabled tooltips | "Open a file first" (View items with no file); "Switch to text view (Ctrl+H) to use this" (wrap, line numbers) |
 
 Size formatting: decimal-ish "GB/MB/KB/B" with one decimal (e.g. `20.0 GB`), consistent with Phase 1.
 
@@ -256,11 +257,11 @@ New cargo dependencies (`rfd`, `memchr`) are covered by the footprint gate (`car
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting
-- [ ] Dimension 2 Visuals
-- [ ] Dimension 3 Color
-- [ ] Dimension 4 Typography
-- [ ] Dimension 5 Spacing
-- [ ] Dimension 6 Registry Safety
+- [x] Dimension 1 Copywriting
+- [x] Dimension 2 Visuals
+- [x] Dimension 3 Color
+- [x] Dimension 4 Typography
+- [x] Dimension 5 Spacing
+- [x] Dimension 6 Registry Safety
 
 **Approval:** pending
