@@ -96,7 +96,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **PERF-01**: App window appears in about 200 ms on a cold start
 - [x] **PERF-02**: Idle RAM is in the tens of MB and idle CPU is near zero
 - [ ] **PERF-03**: Windows and Linux ship as a single portable binary under ~15 MB, with no installer or runtime
-- [ ] **PERF-04**: macOS ships as an unsigned `.app` bundle (users open it via right-click → Open the first time)
+- [ ] **PERF-04**: macOS ships as an unsigned (ad-hoc signed) `.app` bundle; first launch is allowed via System Settings › Privacy & Security › "Open Anyway" on macOS 15+, or right-click → Open on macOS 14 and earlier
 - [x] **PERF-05**: Runs on Windows, Linux and macOS
 
 ## v2 Requirements
