@@ -444,12 +444,16 @@ Package names are for Ubuntu 22.04 (`libgl1-mesa-dri`, `libglx-mesa0`, `libxkbco
 | A9 | Stripped skeleton binary ~6-10 MB (from STACK.md, unmeasured) | Release profile | Gate may fail; that is what the phase measures |
 | A10 | OS startup of ~200 ms is achievable with glow on real GPU (unmeasured) | Summary | Drives go/no-go |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Windows CI renderer.** Which software GL path (Mesa DLL vs wgpu WARP) gives a stable job? Recommendation: Windows CI = size hard gate + best-effort runtime; real Windows glow numbers from the local machine are recorded in `docs/measurements.md` by hand (the user's machine is Windows 11).
+   **RESOLVED:** Windows CI uses Mesa llvmpipe (hash-pinned `mesa-dist-win` DLLs next to the exe) with `continue-on-error` on the runtime step; size stays a hard gate (plan 01-03 Task 3). Real Windows numbers come from the local machine (plan 01-05).
 2. **CONTEXT says "stripped binary <= 10 MB" vs project target 15 MB.** Fine as a skeleton budget; confirm that bundled JetBrains Mono is excluded from the first measurement.
+   **RESOLVED:** the 10 MB gate applies to the default glow build; a no-font build (`--no-default-features --features glow`, label `windows-local-glow-nofont`) is also measured and the font delta is recorded in `## Size deltas` (plan 01-05 Task 1).
 3. **Does the user want `wgpu` binary size reported even if it fails the 10 MB gate?** Recommendation: yes, reported only; gate applies to glow.
+   **RESOLVED:** wgpu size and runtime are reported only (`windows-local-wgpu` and the CI wgpu matrix leg); the 10 MB hard gate applies to glow only (plans 01-03, 01-05).
 4. **macOS bundle-less measurement:** run the raw binary on macOS for the gate; `.app` packaging is PERF-04 (later).
+   **RESOLVED:** macOS CI measures the raw `target/release/whim` binary; no `.app` bundle in Phase 1 (plan 01-03 Task 3).
 
 ## Environment Availability
 
