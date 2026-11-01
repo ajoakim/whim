@@ -1,7 +1,8 @@
 ---
 phase: 1
 slug: toolkit-footprint-gate
-status: draft
+status: approved
+reviewed_at: 2026-10-31
 shadcn_initialized: false
 preset: none
 created: 2026-10-31
@@ -9,6 +10,8 @@ created: 2026-10-31
 
 # Phase 1 — UI Design Contract
 
+
+**Visual anchor:** the monospace viewer with its muted offset gutter is the primary focus; menu bar and status bar are recessive chrome.
 > Visual and interaction contract for the walking skeleton. Native Rust app (egui/eframe 0.37, glow). All values are egui points (logical px, scaled by `pixels_per_point`), not CSS. Intentionally minimal: this phase measures the toolkit, it does not design the product. Later phases extend this file.
 
 Sources: CONTEXT.md (skeleton scope, fonts, IME decisions), STACK.md (egui/glow, custom painter), ROADMAP.md (success criteria 1, 4). Everything else is Claude's discretion, marked "(default)".
@@ -82,7 +85,7 @@ Dark theme only in Phase 1. Values are `Color32`.
 | Dominant (60%) | `#1E1F22` | `panel_fill` / `window_fill` / editor background |
 | Secondary (30%) | `#2B2D31` | Menu bar fill, status bar fill, menu popup fill, separators `#3A3C41` |
 | Accent (10%) | `#4C9AFF` | See reserved list below |
-| Destructive | `#F2555A` | Not used in Phase 1 (reserved for error text in status bar) |
+| Destructive | `#F2555A` | Error text only (status bar and viewer error state) |
 | Text primary | `#D8DADF` | Editor text, menu text (contrast > 10:1 on dominant) |
 | Text muted | `#8B8F98` | Status bar labels, non-printable placeholder `·`, row offset gutter (contrast >= 4.5:1 on secondary) |
 
@@ -133,7 +136,7 @@ No encoding, EOL, line:col or indexing progress yet (Phase 2).
 
 | Element | Copy |
 |---------|------|
-| Primary CTA | "Open File..." (File menu; disabled in Phase 1 if no dialog dependency) |
+| Primary CTA | "Open..." (File menu; disabled in Phase 1 if no dialog dependency) |
 | Empty state heading | "No file open" |
 | Empty state body | "Run `whim <path>` or choose File > Open to view a file." (centered, muted, 14pt, in the viewer area when no path given) |
 | Error state (cannot open) | "Couldn't open {filename}: {reason}. Check the path and permissions, then try again." (shown in status bar left slot, in destructive color, plus centered in viewer) |
@@ -157,11 +160,11 @@ Cargo dependency vetting is covered by the footprint gate (cargo-bloat, `cargo d
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
 **Approval:** pending
