@@ -1,5 +1,8 @@
+pub mod hexview;
 pub mod rows;
+pub mod scrollbar;
 pub mod snap;
+pub mod textview;
 
 use crate::theme;
 use eframe::egui::{self, Color32, FontId, Key, Sense};
