@@ -12,10 +12,10 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CORE-01**: User can open a file of tens of GB and see its first page in under 1 second
 - [x] **CORE-02**: App never reads a whole file into memory; RAM use grows with edits, not file size
 - [ ] **CORE-03**: User can scroll smoothly through any file, including before line indexing finishes
-- [ ] **CORE-04**: User sees background line-indexing progress in the status bar; line numbers are shown immediately (approximate/estimated while counting) and become exact when it completes
-- [ ] **CORE-05**: User can jump to a line number or a byte offset
+- [x] **CORE-04**: User sees background line-indexing progress in the status bar; line numbers are shown immediately (approximate/estimated while counting) and become exact when it completes
+- [x] **CORE-05**: User can jump to a line number or a byte offset
 - [ ] **CORE-06**: User can view files containing extremely long lines (multi-GB single line) without the app freezing
-- [ ] **CORE-07**: All long operations (indexing, search, replace-all, save) show progress and can be cancelled without blocking the UI
+- [x] **CORE-07**: All long operations (indexing, search, replace-all, save) show progress and can be cancelled without blocking the UI
 
 ### Editing (EDIT)
 
@@ -60,7 +60,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **HEX-01**: User can view any file (including huge ones) in a hex view with offset, hex and ASCII columns
 - [ ] **HEX-02**: User can overwrite individual bytes in the hex view and save
-- [ ] **HEX-03**: User can jump to an offset in hex view
+- [x] **HEX-03**: User can jump to an offset in hex view
 - [ ] **HEX-04**: Switching between text and hex view keeps the same byte position, and both views share one undo history
 - [x] **HEX-05**: Binary files open as text, with a banner offering to switch to hex (never auto-switches)
 
@@ -154,14 +154,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OPEN-09 | Phase 2 | Pending |
 | CORE-02 | Phase 2 | Complete |
 | CORE-03 | Phase 2 | Pending |
-| CORE-04 | Phase 2 | Pending |
-| CORE-05 | Phase 2 | Pending |
+| CORE-04 | Phase 2 | Complete |
+| CORE-05 | Phase 2 | Complete |
 | CORE-06 | Phase 2 | Pending |
-| CORE-07 | Phase 2 | Pending |
+| CORE-07 | Phase 2 | Complete |
 | EDIT-05 | Phase 2 | Pending |
 | EDIT-06 | Phase 2 | Pending |
 | HEX-01 | Phase 2 | Pending |
-| HEX-03 | Phase 2 | Pending |
+| HEX-03 | Phase 2 | Complete |
 | HEX-05 | Phase 2 | Complete |
 | UI-01 | Phase 2 | Pending |
 | UI-05 | Phase 2 | Complete |
