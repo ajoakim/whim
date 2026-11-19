@@ -132,12 +132,7 @@ pub struct Preview {
     pub valid: bool,
 }
 
-pub fn preview(
-    input: &str,
-    hex_mode: bool,
-    len: u64,
-    total_lines: (u64, Exactness),
-) -> Preview {
+pub fn preview(input: &str, hex_mode: bool, len: u64, total_lines: (u64, Exactness)) -> Preview {
     let Ok(target) = parse_goto(input, hex_mode) else {
         return Preview {
             text: INVALID_TEXT.to_owned(),
@@ -262,17 +257,18 @@ mod tests {
             }
         );
         assert_eq!(
-            resolve(GotoTarget::Percent(100.0), &src, &idx).unwrap().offset,
+            resolve(GotoTarget::Percent(100.0), &src, &idx)
+                .unwrap()
+                .offset,
             199
         );
         assert_eq!(
-            resolve(GotoTarget::Percent(50.0), &src, &idx).unwrap().offset,
+            resolve(GotoTarget::Percent(50.0), &src, &idx)
+                .unwrap()
+                .offset,
             100
         );
-        assert_eq!(
-            resolve(GotoTarget::Line(1), &src, &idx).unwrap().offset,
-            0
-        );
+        assert_eq!(resolve(GotoTarget::Line(1), &src, &idx).unwrap().offset, 0);
     }
 
     #[test]

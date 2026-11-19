@@ -15,10 +15,8 @@ use crate::text::{self, Decoded, decode_segment};
 use crate::theme;
 use crate::view::scrollbar::{self, Axis, HBAR_H, VBAR_W};
 use crate::view::snap;
-use eframe::egui::{
-    self, Align2, FontId, Galley, Key, Rect, RichText, Sense, Stroke, pos2, vec2,
-};
 use eframe::egui::text::{LayoutJob, TextFormat, TextWrapping};
+use eframe::egui::{self, Align2, FontId, Galley, Key, Rect, RichText, Sense, Stroke, pos2, vec2};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -84,7 +82,8 @@ pub(crate) fn decode_seg_from_source(
     src: &dyn TextSource,
     seg: &Segment,
 ) -> Result<Decoded, SourceError> {
-    let seg_len = usize::try_from(seg.end.saturating_sub(seg.start)).map_err(|_| SourceError::Changed)?;
+    let seg_len =
+        usize::try_from(seg.end.saturating_sub(seg.start)).map_err(|_| SourceError::Changed)?;
     let bytes = read_clamped(src, seg.start, seg_len)?;
     let next_is_newline = if !seg.newline_end && seg.end < src.len() {
         let mut next = [0u8; 1];
@@ -729,8 +728,8 @@ impl TextView {
             pos2(vtrack.left(), vbar_bottom),
         );
         let content_w = text_rect.width().max(16.0);
-        let visible_rows = ((text_rect.height().max(0.0) / theme::ROW_HEIGHT).ceil() as usize)
-            .max(1);
+        let visible_rows =
+            ((text_rect.height().max(0.0) / theme::ROW_HEIGHT).ceil() as usize).max(1);
         self.visible_rows = visible_rows;
 
         // Frozen state: paint last good rows dimmed to 40%, no I/O, no input.
@@ -843,7 +842,10 @@ impl TextView {
         }
 
         // Keyboard navigation & selection.
-        if read_err.is_none() && focused && !cx.keys_blocked && !ui.ctx().any_popup_open()
+        if read_err.is_none()
+            && focused
+            && !cx.keys_blocked
+            && !ui.ctx().any_popup_open()
             && let Err(e) = self.handle_keys(
                 ui,
                 cx.source,
@@ -961,8 +963,7 @@ impl TextView {
                 );
                 painter.galley(pos2(ox, oy + theme::ROW_HEIGHT), done, theme::TEXT);
             }
-            let caret_rect =
-                Rect::from_min_size(pos2(caret_x, oy), vec2(2.0, theme::ROW_HEIGHT));
+            let caret_rect = Rect::from_min_size(pos2(caret_x, oy), vec2(2.0, theme::ROW_HEIGHT));
             painter.rect_filled(caret_rect, 0.0, theme::ACCENT);
             ui.ctx().output_mut(|o| {
                 o.ime = Some(egui::output::IMEOutput {
@@ -1168,7 +1169,11 @@ fn build_layout_job(decoded: &Decoded, font: FontId, wrap: bool, content_w: f32)
         let s = r.start.min(total_chars);
         let e = r.end.min(total_chars);
         if s > cur {
-            job.append(&decoded.text[char_bytes[cur]..char_bytes[s]], 0.0, fmt(theme::TEXT));
+            job.append(
+                &decoded.text[char_bytes[cur]..char_bytes[s]],
+                0.0,
+                fmt(theme::TEXT),
+            );
         }
         if e > s {
             job.append(
@@ -1274,10 +1279,7 @@ fn paint_rows(
                     text_rect.left() - hscroll_px + placed.row.x_offset(hi.into())
                 };
                 if x1 > x0 {
-                    let srect = Rect::from_min_max(
-                        pos2(x0, ry),
-                        pos2(x1, ry + theme::ROW_HEIGHT),
-                    );
+                    let srect = Rect::from_min_max(pos2(x0, ry), pos2(x1, ry + theme::ROW_HEIGHT));
                     text_painter.rect_filled(srect, 0.0, sel_fill);
                 }
             }

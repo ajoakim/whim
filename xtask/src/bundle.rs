@@ -208,10 +208,8 @@ mod tests {
     impl TestDir {
         fn new() -> Self {
             let n = COUNTER.fetch_add(1, Ordering::Relaxed);
-            let p = std::env::temp_dir().join(format!(
-                "xtask-bundle-test-{}-{n}",
-                std::process::id()
-            ));
+            let p =
+                std::env::temp_dir().join(format!("xtask-bundle-test-{}-{n}", std::process::id()));
             std::fs::create_dir(&p).expect("create unique test dir");
             Self(p)
         }
@@ -245,7 +243,10 @@ mod tests {
         assert_eq!(p.matches("<key>CFBundleDisplayName</key>").count(), 1);
         assert_eq!(p.matches("<key>CFBundlePackageType</key>").count(), 1);
         assert_eq!(p.matches("<string>APPL</string>").count(), 1);
-        assert_eq!(p.matches("<key>CFBundleShortVersionString</key>").count(), 1);
+        assert_eq!(
+            p.matches("<key>CFBundleShortVersionString</key>").count(),
+            1
+        );
         assert_eq!(p.matches("<key>CFBundleVersion</key>").count(), 1);
         assert_eq!(p.matches("<string>0.1.0</string>").count(), 2);
         assert!(p.contains("<key>NSHighResolutionCapable</key>\n\t<true/>"));

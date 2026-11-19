@@ -6,7 +6,8 @@
 //! bundled fonts. ASCII-only files never start the provider's font-enumeration thread,
 //! so startup and idle footprint stay at Phase 1 levels.
 
-pub const MISSING_GLYPHS_NOTICE: &str = "Some characters can't be shown: no installed font has them";
+pub const MISSING_GLYPHS_NOTICE: &str =
+    "Some characters can't be shown: no installed font has them";
 
 use eframe::egui;
 
@@ -42,11 +43,7 @@ impl FontFallback {
     }
 
     /// Pure state machine, unit-tested with a mock glyph predicate.
-    pub fn decide(
-        &mut self,
-        text: &str,
-        mut has_glyph: impl FnMut(char) -> bool,
-    ) -> FontAction {
+    pub fn decide(&mut self, text: &str, mut has_glyph: impl FnMut(char) -> bool) -> FontAction {
         if self.state == State::Done || text.is_ascii() {
             return FontAction::Nothing;
         }
@@ -93,9 +90,7 @@ impl FontFallback {
         if text.is_ascii() || self.state == State::Done {
             return None;
         }
-        let action = self.decide(text, |c| {
-            ctx.fonts_mut(|f| f.has_glyph(font_id, c))
-        });
+        let action = self.decide(text, |c| ctx.fonts_mut(|f| f.has_glyph(font_id, c)));
         match action {
             FontAction::Nothing => None,
             FontAction::Install => {

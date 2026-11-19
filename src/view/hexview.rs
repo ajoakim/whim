@@ -358,7 +358,8 @@ impl HexView {
                 }
                 if cmd && i.key_pressed(Key::End) {
                     let last_row = align_row(len - 1);
-                    let back = (visible_rows.saturating_sub(1) as u64).saturating_mul(BYTES_PER_ROW);
+                    let back =
+                        (visible_rows.saturating_sub(1) as u64).saturating_mul(BYTES_PER_ROW);
                     self.anchor = last_row.saturating_sub(back);
                     self.sub_px = 0.0;
                     self.bump_scroll();
@@ -405,7 +406,8 @@ impl HexView {
         if let Some(pos) = response.interact_pointer_pos()
             && content_rect.contains(pos)
         {
-            let row_idx = ((pos.y - content_rect.top()).max(0.0) / theme::ROW_HEIGHT).floor() as u64;
+            let row_idx =
+                ((pos.y - content_rect.top()).max(0.0) / theme::ROW_HEIGHT).floor() as u64;
             let row_start = self
                 .last_good_anchor
                 .saturating_add(row_idx.saturating_mul(BYTES_PER_ROW));
@@ -567,10 +569,7 @@ fn paint_hex_rows(
                 painter.rect_filled(hrect, 0.0, sel_fill);
 
                 let ax = cols.ascii_byte_x(col);
-                let arect = Rect::from_min_size(
-                    pos2(ax, y),
-                    vec2(cols.cell_w, theme::ROW_HEIGHT),
-                );
+                let arect = Rect::from_min_size(pos2(ax, y), vec2(cols.cell_w, theme::ROW_HEIGHT));
                 painter.rect_filled(arect, 0.0, sel_fill);
             }
         }
@@ -603,7 +602,11 @@ fn paint_hex_rows(
             );
         }
         for (i, (ch, is_dim)) in ascii.into_iter().enumerate() {
-            let color = if is_dim { theme::MUTED_DIM } else { theme::TEXT };
+            let color = if is_dim {
+                theme::MUTED_DIM
+            } else {
+                theme::TEXT
+            };
             painter.text(
                 pos2(snap::snap(cols.ascii_byte_x(i), ppp), cy),
                 Align2::LEFT_CENTER,
@@ -677,7 +680,8 @@ mod tests {
         let len = 16_000u64;
         let anchor = 8_000u64;
         let vis = 320u64;
-        let (t_start, t_len) = scrollbar::thumb(anchor as f64 / len as f64, vis as f64 / len as f64, 400.0);
+        let (t_start, t_len) =
+            scrollbar::thumb(anchor as f64 / len as f64, vis as f64 / len as f64, 400.0);
         let back = scrollbar::frac_for_thumb(t_start, t_len, 400.0);
         assert!((back - 0.5).abs() < 1e-4);
     }
@@ -700,7 +704,10 @@ mod tests {
 
         let src = MemSource::new((0..2048).map(|i| (i & 0xFF) as u8).collect());
         let mut hv = HexView::new();
-        let mut sel = Selection { anchor: 4, head: 22 };
+        let mut sel = Selection {
+            anchor: 4,
+            head: 22,
+        };
         for _ in 0..2 {
             let mut full = ctx.run_ui(input.clone(), |ui| {
                 let _ = hv.show(ui, &src, &mut sel);

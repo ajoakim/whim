@@ -252,8 +252,8 @@ impl TextSource for FileSource {
             let blk_end = blk_start
                 .checked_add(blk_size)
                 .map_or(self.identity.len, |v| v.min(self.identity.len));
-            let slice_end = usize::try_from(end.min(blk_end) - blk_start)
-                .map_err(|_| SourceError::Changed)?;
+            let slice_end =
+                usize::try_from(end.min(blk_end) - blk_start).map_err(|_| SourceError::Changed)?;
             let copy_len = slice_end
                 .checked_sub(slice_start)
                 .ok_or(SourceError::Changed)?;

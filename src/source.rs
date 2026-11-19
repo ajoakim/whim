@@ -57,11 +57,7 @@ pub trait TextSource: Send + Sync {
 }
 
 /// Reads `min(max, len - start)` bytes at `start` (empty `Vec` if `start >= len`).
-pub fn read_clamped(
-    src: &dyn TextSource,
-    start: u64,
-    max: usize,
-) -> Result<Vec<u8>, SourceError> {
+pub fn read_clamped(src: &dyn TextSource, start: u64, max: usize) -> Result<Vec<u8>, SourceError> {
     let len = src.len();
     if start >= len {
         return Ok(Vec::new());

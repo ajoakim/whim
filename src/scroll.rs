@@ -238,7 +238,13 @@ mod tests {
         }
         for i in 1..b.len() {
             let prev = segment_start_cap(&src, b[i] - 1, cap).unwrap();
-            assert_eq!(prev, b[i - 1], "prev of B[{i}]={} expected {}", b[i], b[i - 1]);
+            assert_eq!(
+                prev,
+                b[i - 1],
+                "prev of B[{i}]={} expected {}",
+                b[i],
+                b[i - 1]
+            );
         }
 
         if exhaustive {
@@ -258,11 +264,7 @@ mod tests {
         let mut rng = XorShift::new(777);
         let rates = [0u32, 1, 20];
         for i in 0..300 {
-            let len = if i == 0 {
-                0
-            } else {
-                rng.below(4_000) as usize
-            };
+            let len = if i == 0 { 0 } else { rng.below(4_000) as usize };
             let data = fixtures::random_text(&mut rng, len, rates[i % rates.len()]);
             verify_inverse(&data, 16, i < 40);
         }

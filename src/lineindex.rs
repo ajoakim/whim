@@ -152,11 +152,7 @@ impl LineIndex {
     }
 
     /// 0-based line number of byte `off`.
-    pub fn line_of(
-        &self,
-        src: &dyn TextSource,
-        off: u64,
-    ) -> Result<(u64, Exactness), SourceError> {
+    pub fn line_of(&self, src: &dyn TextSource, off: u64) -> Result<(u64, Exactness), SourceError> {
         let off = off.min(self.len);
         if off == 0 {
             return Ok((0, Exactness::Exact));
@@ -209,8 +205,8 @@ impl LineIndex {
                 let idx = self.cum.partition_point(|&c| c < line0);
                 let b = idx.saturating_sub(1);
                 let blk_start = (b as u64).saturating_mul(BLOCK);
-                let need = usize::try_from(line0 - self.cum[b] - 1)
-                    .map_err(|_| SourceError::Changed)?;
+                let need =
+                    usize::try_from(line0 - self.cum[b] - 1).map_err(|_| SourceError::Changed)?;
                 let buf = read_clamped(src, blk_start, BLOCK as usize)?;
                 if let Some(pos) = memchr::memchr_iter(b'\n', &buf).nth(need) {
                     return Ok((
@@ -223,8 +219,8 @@ impl LineIndex {
                 // Complete index, line lies in the final partial block (< BLOCK bytes).
                 let b = self.cum.len().saturating_sub(1);
                 let blk_start = (b as u64).saturating_mul(BLOCK);
-                let need = usize::try_from(line0 - last_cum - 1)
-                    .map_err(|_| SourceError::Changed)?;
+                let need =
+                    usize::try_from(line0 - last_cum - 1).map_err(|_| SourceError::Changed)?;
                 let tail_len = usize::try_from(self.len.saturating_sub(blk_start))
                     .map_err(|_| SourceError::Changed)?;
                 let buf = read_clamped(src, blk_start, tail_len)?;
@@ -375,8 +371,10 @@ pub fn spawn_indexer(
                 let rem = step - off;
                 let blk_len = rem.min(BLOCK as usize);
                 let slice = &buf[off..off + blk_len];
-                total_nl = total_nl.saturating_add(memchr::memchr_iter(b'\n', slice).count() as u64);
-                cr_total = cr_total.saturating_add(memchr::memchr_iter(b'\r', slice).count() as u64);
+                total_nl =
+                    total_nl.saturating_add(memchr::memchr_iter(b'\n', slice).count() as u64);
+                cr_total =
+                    cr_total.saturating_add(memchr::memchr_iter(b'\r', slice).count() as u64);
                 if blk_len == BLOCK as usize {
                     covered = covered.saturating_add(BLOCK);
                     pending.push(total_nl);
@@ -515,11 +513,7 @@ mod tests {
             let data = fixtures::random_text(&mut rng, len, rate);
             let head = &data[..data.len().min(65_536)];
             let mut idx = LineIndex::new(data.len() as u64, head);
-            let job = spawn_indexer(
-                1,
-                Box::new(MemSource::new(data.clone())),
-                Box::new(|| {}),
-            );
+            let job = spawn_indexer(1, Box::new(MemSource::new(data.clone())), Box::new(|| {}));
             drain(&mut idx, &job);
             assert!(idx.is_complete());
 
@@ -681,7 +675,10 @@ mod tests {
         }
         let elapsed_ms = t0.elapsed().as_millis() as usize;
         assert_eq!(dones, 1);
-        assert!(batches <= elapsed_ms / 100 + 2, "batches={batches}, ms={elapsed_ms}");
+        assert!(
+            batches <= elapsed_ms / 100 + 2,
+            "batches={batches}, ms={elapsed_ms}"
+        );
         // Wait briefly for the final notify().
         for _ in 0..50 {
             if notifies.load(Ordering::Relaxed) == total_msgs {

@@ -18,10 +18,8 @@ impl TempDir {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or(0);
-        let path = std::env::temp_dir().join(format!(
-            "whim-test-{}-{n}-{nanos}",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("whim-test-{}-{n}-{nanos}", std::process::id()));
         std::fs::create_dir(&path).expect("create unique temp dir");
         Self(path)
     }
@@ -55,7 +53,11 @@ pub struct XorShift(u64);
 
 impl XorShift {
     pub fn new(seed: u64) -> Self {
-        Self(if seed == 0 { 0x9E37_79B9_7F4A_7C15 } else { seed })
+        Self(if seed == 0 {
+            0x9E37_79B9_7F4A_7C15
+        } else {
+            seed
+        })
     }
 
     pub fn next_u64(&mut self) -> u64 {
@@ -130,7 +132,17 @@ pub mod fixtures {
     /// (except when the length budget ends exactly inside one).
     pub fn random_text(rng: &mut XorShift, len: usize, newline_pct: u32) -> Vec<u8> {
         const CHARS: &[&[u8]] = &[
-            b"a", b"b", b"c", b"x", b"y", b"z", b"0", b"9", b" ", b"\t", b"\xC3\xA9",
+            b"a",
+            b"b",
+            b"c",
+            b"x",
+            b"y",
+            b"z",
+            b"0",
+            b"9",
+            b" ",
+            b"\t",
+            b"\xC3\xA9",
             b"\xE6\x97\xA5",
         ];
         let mut out = Vec::with_capacity(len);
