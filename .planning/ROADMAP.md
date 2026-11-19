@@ -70,7 +70,7 @@ Plans:
 - [x] 02-02-PLAN.md — D-21 macOS Whim.app xtask + D-18 macOS CI hard gate
 - [x] 02-03-PLAN.md — Storage: FileSource positional reads + chunk cache + open pipeline (binary/UTF-16/EOL)
 - [x] 02-04-PLAN.md — Sparse line index with cancellable worker + Ctrl+G grammar/resolve
-- [ ] 02-05-PLAN.md — Stateless segment-boundary rule (inverse stepping) + decoder + scrollbar widget
+- [x] 02-05-PLAN.md — Stateless segment-boundary rule (inverse stepping) + decoder + scrollbar widget
 - [ ] 02-06-PLAN.md — Selection model + copy tiers/caps + cancellable copy worker
 - [ ] 02-07-PLAN.md — Text view: virtualized real-line layout, wrap, gutter, navigation, frozen rendering
 - [ ] 02-08-PLAN.md — Hex view: 16-byte rows, hit test, position-preserving switch
@@ -165,7 +165,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 (Ph
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Toolkit & Footprint Gate | 5/5 | Complete    | 2026-11-01 |
-| 2. Core Storage & Read-Only Viewers | 4/12 | In Progress|  |
+| 2. Core Storage & Read-Only Viewers | 5/12 | In Progress|  |
 | 3. Editing, Undo & Hex Overwrite | 0/TBD | Not started | - |
 | 4. Safe Save & Recovery | 0/TBD | Not started | - |
 | 5. Encoding, Tabs & File-Change Safety | 0/TBD | Not started | - |

@@ -11,10 +11,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **CORE-01**: User can open a file of tens of GB and see its first page in under 1 second
 - [x] **CORE-02**: App never reads a whole file into memory; RAM use grows with edits, not file size
-- [ ] **CORE-03**: User can scroll smoothly through any file, including before line indexing finishes
+- [x] **CORE-03**: User can scroll smoothly through any file, including before line indexing finishes
 - [x] **CORE-04**: User sees background line-indexing progress in the status bar; line numbers are shown immediately (approximate/estimated while counting) and become exact when it completes
 - [x] **CORE-05**: User can jump to a line number or a byte offset
-- [ ] **CORE-06**: User can view files containing extremely long lines (multi-GB single line) without the app freezing
+- [x] **CORE-06**: User can view files containing extremely long lines (multi-GB single line) without the app freezing
 - [x] **CORE-07**: All long operations (indexing, search, replace-all, save) show progress and can be cancelled without blocking the UI
 
 ### Editing (EDIT)
@@ -153,10 +153,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OPEN-02 | Phase 2 | Pending |
 | OPEN-09 | Phase 2 | Pending |
 | CORE-02 | Phase 2 | Complete |
-| CORE-03 | Phase 2 | Pending |
+| CORE-03 | Phase 2 | Complete |
 | CORE-04 | Phase 2 | Complete |
 | CORE-05 | Phase 2 | Complete |
-| CORE-06 | Phase 2 | Pending |
+| CORE-06 | Phase 2 | Complete |
 | CORE-07 | Phase 2 | Complete |
 | EDIT-05 | Phase 2 | Pending |
 | EDIT-06 | Phase 2 | Pending |
