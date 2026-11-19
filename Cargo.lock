@@ -3622,7 +3622,6 @@ dependencies = [
  "egui_system_font_provider",
  "lexopt",
  "memchr",
- "memmap2",
  "rfd",
  "windows-sys 0.61.2",
 ]

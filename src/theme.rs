@@ -17,6 +17,8 @@ pub const OVERLAY_SCRIM: Color32 = Color32::from_black_alpha(128);
 pub const DROP_FILL: Color32 = Color32::from_rgba_unmultiplied_const(0x4C, 0x9A, 0xFF, 26);
 pub const ROW_HEIGHT: f32 = 20.0;
 pub const MONO_SIZE: f32 = 14.0;
+pub const BANNER_H: f32 = 24.0;
+pub const TAB_H: f32 = 24.0;
 
 pub fn apply(ctx: &egui::Context) {
     let mut v = egui::Visuals::dark();

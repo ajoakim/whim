@@ -3,7 +3,6 @@
 use whim::args::{USAGE, parse_args};
 use whim::backend::BACKEND;
 use whim::bench::StartupClock;
-use whim::file::{FileError, MappedFile, open_mapped};
 
 /// Release builds use the GUI subsystem, so `--help`/`--version`/usage errors would print
 /// nowhere. Attach to the parent console (if any) and point unset std handles at it.
@@ -63,7 +62,7 @@ fn main() -> eframe::Result {
             std::process::exit(0);
         });
     }
-    let opened: Option<Result<MappedFile, FileError>> = args.path.as_deref().map(open_mapped);
+    let initial_path = args.path;
     let options = eframe::NativeOptions {
         renderer: whim::backend::renderer(),
         viewport: eframe::egui::ViewportBuilder::default()
@@ -82,8 +81,9 @@ fn main() -> eframe::Result {
         Box::new(move |cc| {
             Ok(Box::new(whim::app::WhimApp::new(
                 cc,
-                opened,
+                initial_path,
                 StartupClock::new(t0, bench),
+                bench,
                 ppp,
             )))
         }),

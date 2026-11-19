@@ -10,7 +10,6 @@ pub mod bench;
 pub mod copy;
 pub mod dialogs;
 pub mod doc;
-pub mod file;
 pub mod filesource;
 pub mod fonts;
 pub mod goto;
