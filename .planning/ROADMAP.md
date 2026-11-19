@@ -52,7 +52,7 @@ Plans:
 ### Phase 2: Core Storage & Read-Only Viewers
 **Goal**: User can open a file of any size and immediately scroll, jump and inspect it in text or hex, with the whole file never loaded into memory
 **Depends on**: Phase 1
-**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, HEX-01, HEX-03, HEX-05, UI-01, UI-05, OPEN-02, OPEN-09, EDIT-10, PERF-04
+**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, EDIT-05, EDIT-06, EDIT-10, HEX-01, HEX-03, HEX-05, UI-01, UI-05, OPEN-02, OPEN-09, EDIT-10, PERF-04
 **Success Criteria** (what must be TRUE):
   1. User opens a file of tens of GB and sees its first page in under 1 second, with RAM use independent of file size
   2. User scrolls smoothly through the file immediately, before line indexing finishes, sees indexing progress in the status bar, and line numbers become exact on completion
@@ -62,9 +62,24 @@ Plans:
   6. User can toggle line numbers and word wrap (wrap auto-disabled on huge files with a notice), and CJK text displays via font fallback; UI shows only tabs area, editor and status bar (line:col, offset, encoding, EOL, indexing progress)
   7. User can open a file via File > Open (native dialog, Ctrl/Cmd+O) or by dragging it onto the window
   8. Text is laid out by real lines (following line breaks); line numbers appear immediately (approximate while counting, exact when done); user can select text with mouse/keyboard and copy it
-**Plans**: TBD
+**Plans**: 12 plans
 **UI hint**: yes
 
+Plans:
+- [ ] 02-01-PLAN.md — Foundation: dependency delta, module skeleton, TextSource contract, test utilities, lazy CJK font fallback
+- [ ] 02-02-PLAN.md — D-21 macOS Whim.app xtask + D-18 macOS CI hard gate
+- [ ] 02-03-PLAN.md — Storage: FileSource positional reads + chunk cache + open pipeline (binary/UTF-16/EOL)
+- [ ] 02-04-PLAN.md — Sparse line index with cancellable worker + Ctrl+G grammar/resolve
+- [ ] 02-05-PLAN.md — Stateless segment-boundary rule (inverse stepping) + decoder + scrollbar widget
+- [ ] 02-06-PLAN.md — Selection model + copy tiers/caps + cancellable copy worker
+- [ ] 02-07-PLAN.md — Text view: virtualized real-line layout, wrap, gutter, navigation, frozen rendering
+- [ ] 02-08-PLAN.md — Hex view: 16-byte rows, hit test, position-preserving switch
+- [ ] 02-09-PLAN.md — Selection interaction: mouse/keyboard, word/triple-click, caret hit-test
+- [ ] 02-10-PLAN.md — Remove memmap2/file.rs/rows.rs; Doc state, tab strip, binary banner, worker-driven open
+- [ ] 02-11-PLAN.md — Shell: rfd dialog, drag & drop, status bar, copy confirm, Go-to box, UAT checkpoint
+- [ ] 02-12-PLAN.md — Local measurements, 02-VALIDATION.md, 02-GATE.md, ROADMAP update, commit + push CI
+
+### Phase 3: Editing, Undo & Hex Overwrite
 ### Phase 3: Editing, Undo & Hex Overwrite
 **Goal**: User can edit a file of any size in text or hex, with working selection, clipboard, IME and bounded undo, with memory growing only with edits
 **Depends on**: Phase 2
