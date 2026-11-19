@@ -17,6 +17,9 @@ env:
   CI_MAX_STARTUP_MS: "1300"
   CI_MAX_RSS_MB: "180"
   CI_MAX_IDLE_CPU: "2.0"
+  # D-18: macOS runners have real GL, so runtime budgets are hard there; software-GL runners stay report-only.
+  MACOS_MAX_STARTUP_MS: "600"
+  MACOS_MAX_FOOTPRINT_MB: "70"
   LINUX_GL_DEPS: >-
     xvfb libgl1-mesa-dri libglx-mesa0 libegl1 libxkbcommon-x11-0 libx11-dev
     libxcursor-dev libxrandr-dev libxi-dev libxkbcommon-dev libwayland-dev
@@ -127,10 +130,32 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         env:
-          BUDGET_FLAGS: ${{ matrix.backend == 'glow' && format('--max-startup-ms {0} --max-rss-mb {1} --max-idle-cpu {2}', env.CI_MAX_STARTUP_MS, env.CI_MAX_RSS_MB, env.CI_MAX_IDLE_CPU) || '' }}
+          BUDGET_FLAGS: ${{ matrix.backend == 'glow' && format('--max-startup-ms {0} --max-rss-mb {1} --max-idle-cpu {2}', env.MACOS_MAX_STARTUP_MS, env.MACOS_MAX_FOOTPRINT_MB, env.CI_MAX_IDLE_CPU) || '' }}
         run: >-
           cargo xtask measure --runs 10
           $BUDGET_FLAGS --label ${{ matrix.os }}-${{ matrix.backend }}
+      - name: Bundle Whim.app (macOS, glow)
+        if: runner.os == 'macOS' && matrix.backend == 'glow'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo xtask bundle-macos --bin target/release/whim --out target/bundle
+          plutil -lint target/bundle/Whim.app/Contents/Info.plist
+          codesign --force --deep --sign - target/bundle/Whim.app
+          codesign --verify --deep --strict --verbose=2 target/bundle/Whim.app
+          otool -l target/bundle/Whim.app/Contents/MacOS/whim | grep -A4 LC_BUILD_VERSION || true
+          mkdir -p target/dist
+          ditto -c -k --sequesterRsrc --keepParent target/bundle/Whim.app target/dist/Whim-macos-arm64.zip
+          rm -rf target/check && mkdir -p target/check
+          ditto -x -k target/dist/Whim-macos-arm64.zip target/check
+          test -x target/check/Whim.app/Contents/MacOS/whim
+          target/check/Whim.app/Contents/MacOS/whim --bench --bench-exit-after 3
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: runner.os == 'macOS' && matrix.backend == 'glow'
+        with:
+          name: Whim-macos-arm64
+          path: target/dist/Whim-macos-arm64.zip
+          if-no-files-found: error
       - name: Build bare eframe baseline (glow, report only)
         if: matrix.backend == 'glow'
         continue-on-error: true

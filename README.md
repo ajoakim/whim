@@ -66,6 +66,18 @@ On Linux you need the usual X11/Wayland and OpenGL development packages for wini
 target/release/whim path/to/file
 ```
 
+## macOS
+
+The macOS CI artifact `Whim-macos-arm64` contains `Whim-macos-arm64.zip`. Unzip it (double-click in Finder or run `ditto -x -k Whim-macos-arm64.zip .`) to extract `Whim.app`.
+
+`Whim.app` is ad-hoc signed and not notarized, so macOS blocks the first launch:
+
+- macOS 15 (Sequoia) and later: open Whim.app once, then System Settings › Privacy & Security › "Open Anyway" next to the Whim message, and confirm.
+- macOS 14 and earlier: right-click Whim.app › Open, then Open.
+- Any version (Terminal): `xattr -dr com.apple.quarantine /path/to/Whim.app`
+
+File associations and "Open with" arrive in a later release.
+
 ## Development tools
 
 The `xtask` crate holds the measurement harness:
