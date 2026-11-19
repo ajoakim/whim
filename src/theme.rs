@@ -10,12 +10,20 @@ pub const DESTRUCTIVE: Color32 = Color32::from_rgb(0xF2, 0x55, 0x5A);
 pub const TEXT: Color32 = Color32::from_rgb(0xD8, 0xDA, 0xDF);
 pub const MUTED: Color32 = Color32::from_rgb(0x8B, 0x8F, 0x98);
 
+pub const MUTED_DIM: Color32 = Color32::from_rgba_unmultiplied_const(0x8B, 0x8F, 0x98, 153);
+pub const SELECTION: Color32 = Color32::from_rgba_unmultiplied_const(0x4C, 0x9A, 0xFF, 89);
+pub const SELECTION_INACTIVE: Color32 = Color32::from_rgba_unmultiplied_const(0x4C, 0x9A, 0xFF, 51);
+pub const OVERLAY_SCRIM: Color32 = Color32::from_black_alpha(128);
+pub const DROP_FILL: Color32 = Color32::from_rgba_unmultiplied_const(0x4C, 0x9A, 0xFF, 26);
+pub const ROW_HEIGHT: f32 = 20.0;
+pub const MONO_SIZE: f32 = 14.0;
+
 pub fn apply(ctx: &egui::Context) {
     let mut v = egui::Visuals::dark();
     v.panel_fill = DOMINANT;
     v.window_fill = DOMINANT;
     v.override_text_color = Some(TEXT);
-    v.selection.bg_fill = Color32::from_rgba_unmultiplied(0x4C, 0x9A, 0xFF, 89);
+    v.selection.bg_fill = SELECTION;
     v.selection.stroke = egui::Stroke::new(1.0, ACCENT);
     ctx.set_visuals(v);
 
@@ -55,5 +63,17 @@ pub fn apply(ctx: &egui::Context) {
             .or_default()
             .insert(0, "jetbrains-mono".to_owned());
         ctx.set_fonts(fonts);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn alphas() {
+        assert_eq!(MUTED_DIM.a(), 153);
+        assert_eq!(SELECTION_INACTIVE.a(), 51);
+        assert_eq!(OVERLAY_SCRIM.a(), 128);
     }
 }

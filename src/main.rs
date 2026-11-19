@@ -70,6 +70,8 @@ fn main() -> eframe::Result {
             .with_title("Whim")
             .with_inner_size([1024.0, 720.0])
             .with_min_inner_size([480.0, 320.0]),
+        // eframe's stub provider permanently caches "no glyph"; CJK needs the real one (D-07).
+        system_font_fallback: false,
         ..Default::default()
     };
     let bench = args.bench;
