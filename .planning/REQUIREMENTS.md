@@ -58,7 +58,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Hex (HEX)
 
-- [ ] **HEX-01**: User can view any file (including huge ones) in a hex view with offset, hex and ASCII columns
+- [x] **HEX-01**: User can view any file (including huge ones) in a hex view with offset, hex and ASCII columns
 - [ ] **HEX-02**: User can overwrite individual bytes in the hex view and save
 - [x] **HEX-03**: User can jump to an offset in hex view
 - [ ] **HEX-04**: Switching between text and hex view keeps the same byte position, and both views share one undo history
@@ -160,7 +160,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-07 | Phase 2 | Complete |
 | EDIT-05 | Phase 2 | Complete |
 | EDIT-06 | Phase 2 | Complete |
-| HEX-01 | Phase 2 | Pending |
+| HEX-01 | Phase 2 | Complete |
 | HEX-03 | Phase 2 | Complete |
 | HEX-05 | Phase 2 | Complete |
 | UI-01 | Phase 2 | Pending |
