@@ -24,8 +24,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **EDIT-10**: User can select text with mouse and keyboard and copy it in the read-only viewer (with a size cap/warning for huge selections)
 - [ ] **EDIT-03**: User can undo and redo edits; undo history is bounded so memory does not grow without limit
 - [ ] **EDIT-04**: User can type using OS input methods (IME) for CJK and other composed scripts
-- [ ] **EDIT-05**: User can toggle word wrap (automatically disabled on huge files, with a notice)
-- [ ] **EDIT-06**: User can toggle line numbers
+- [x] **EDIT-05**: User can toggle word wrap (automatically disabled on huge files, with a notice)
+- [x] **EDIT-06**: User can toggle line numbers
 
 ### Save & File Safety (SAVE)
 
@@ -158,8 +158,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CORE-05 | Phase 2 | Complete |
 | CORE-06 | Phase 2 | Complete |
 | CORE-07 | Phase 2 | Complete |
-| EDIT-05 | Phase 2 | Pending |
-| EDIT-06 | Phase 2 | Pending |
+| EDIT-05 | Phase 2 | Complete |
+| EDIT-06 | Phase 2 | Complete |
 | HEX-01 | Phase 2 | Pending |
 | HEX-03 | Phase 2 | Complete |
 | HEX-05 | Phase 2 | Complete |
