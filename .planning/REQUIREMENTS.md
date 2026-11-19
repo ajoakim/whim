@@ -21,7 +21,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **EDIT-01**: User can insert, delete and replace text anywhere in a file of any size
 - [ ] **EDIT-02**: User can cut and paste text (with a size cap/warning for huge clipboard operations)
-- [ ] **EDIT-10**: User can select text with mouse and keyboard and copy it in the read-only viewer (with a size cap/warning for huge selections)
+- [x] **EDIT-10**: User can select text with mouse and keyboard and copy it in the read-only viewer (with a size cap/warning for huge selections)
 - [ ] **EDIT-03**: User can undo and redo edits; undo history is bounded so memory does not grow without limit
 - [ ] **EDIT-04**: User can type using OS input methods (IME) for CJK and other composed scripts
 - [ ] **EDIT-05**: User can toggle word wrap (automatically disabled on huge files, with a notice)
@@ -149,7 +149,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-05 | Phase 1 | Complete |
 | UI-04 | Phase 1 | Complete |
 | CORE-01 | Phase 2 | Complete |
-| EDIT-10 | Phase 2 | Pending |
+| EDIT-10 | Phase 2 | Complete |
 | OPEN-02 | Phase 2 | Pending |
 | OPEN-09 | Phase 2 | Pending |
 | CORE-02 | Phase 2 | Complete |
