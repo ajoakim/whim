@@ -75,7 +75,7 @@ Plans:
 - [x] 02-07-PLAN.md — Text view: virtualized real-line layout, wrap, gutter, navigation, frozen rendering
 - [x] 02-08-PLAN.md — Hex view: 16-byte rows, hit test, position-preserving switch
 - [x] 02-09-PLAN.md — Selection interaction: mouse/keyboard, word/triple-click, caret hit-test
-- [ ] 02-10-PLAN.md — Remove memmap2/file.rs/rows.rs; Doc state, tab strip, binary banner, worker-driven open
+- [x] 02-10-PLAN.md — Remove memmap2/file.rs/rows.rs; Doc state, tab strip, binary banner, worker-driven open
 - [ ] 02-11-PLAN.md — Shell: rfd dialog, drag & drop, status bar, copy confirm, Go-to box, UAT checkpoint
 - [ ] 02-12-PLAN.md — Local measurements, 02-VALIDATION.md, 02-GATE.md, ROADMAP update, commit + push CI
 
@@ -165,7 +165,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 (Ph
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Toolkit & Footprint Gate | 5/5 | Complete    | 2026-11-01 |
-| 2. Core Storage & Read-Only Viewers | 9/12 | In Progress|  |
+| 2. Core Storage & Read-Only Viewers | 10/12 | In Progress|  |
 | 3. Editing, Undo & Hex Overwrite | 0/TBD | Not started | - |
 | 4. Safe Save & Recovery | 0/TBD | Not started | - |
 | 5. Encoding, Tabs & File-Change Safety | 0/TBD | Not started | - |
