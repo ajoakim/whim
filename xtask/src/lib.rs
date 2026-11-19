@@ -1,4 +1,5 @@
 //! Whim build/measurement tasks.
+pub mod bundle;
 pub mod measure;
 pub mod size;
 pub mod sparse;
