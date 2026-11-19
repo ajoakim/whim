@@ -9,9 +9,9 @@ use crate::fonts::FontFallback;
 use crate::ime::ImeProbe;
 use crate::lineindex::{Exactness, LineIndex};
 use crate::scroll::{self, Segment};
-use crate::selection::Selection;
+use crate::selection::{self, Selection};
 use crate::source::{SourceError, TextSource, read_clamped};
-use crate::text::{Decoded, decode_segment};
+use crate::text::{self, Decoded, decode_segment};
 use crate::theme;
 use crate::view::scrollbar::{self, Axis, HBAR_H, VBAR_W};
 use crate::view::snap;
@@ -380,7 +380,62 @@ impl TextView {
     }
 
     fn bump_scroll(&mut self) {
+        self.increment_scroll_epoch();
+    }
+
+    /// Increment `scroll_epoch` once per user-initiated movement so 02-11 can detect
+    /// post-jump scrolling (Q8).
+    pub(crate) fn increment_scroll_epoch(&mut self) {
         self.scroll_epoch = self.scroll_epoch.wrapping_add(1);
+    }
+
+    /// Mouse click / press at `(x, y)` inside `text_rect`. Returns the absolute byte offset
+    /// of the character nearest `(x, y)` using `Galley::cursor_from_pos` + `byte_of_char`.
+    pub(crate) fn handle_click(
+        &mut self,
+        cx: &TextViewCtx<'_>,
+        text_rect: Rect,
+        pos: egui::Pos2,
+    ) -> u64 {
+        let len = cx.source.len();
+        if len == 0 || self.last_good.is_empty() {
+            return 0;
+        }
+        let row_idx = ((pos.y - text_rect.top()).max(0.0) / theme::ROW_HEIGHT).floor() as usize;
+        let Some(row) = self.last_good.get(row_idx) else {
+            return len;
+        };
+        let local_x = (pos.x - (text_rect.left() - self.hscroll_px)).max(0.0);
+        let local_y = (row.row_in_seg as f32 + 0.5) * theme::ROW_HEIGHT;
+        let cursor = row.galley.cursor_from_pos(vec2(local_x, local_y));
+        let char_idx: usize = cursor.index.into();
+        let rel_byte = row.decoded.byte_for_char(char_idx);
+        row.seg.start.saturating_add(u64::from(rel_byte)).min(len)
+    }
+
+    /// Double-click word selection at `off`: bounded 256-byte scan via `selection::word_bounds`.
+    pub(crate) fn handle_word_select(
+        &mut self,
+        src: &dyn TextSource,
+        off: u64,
+    ) -> Result<std::ops::Range<u64>, SourceError> {
+        selection::word_bounds(src, off)
+    }
+
+    /// Triple-click paragraph (segment) selection containing `off`:
+    /// `[segment_start(off), next_boundary(segment_start(off)))`.
+    pub(crate) fn handle_triple_select(
+        &mut self,
+        src: &dyn TextSource,
+        off: u64,
+    ) -> Result<std::ops::Range<u64>, SourceError> {
+        let len = src.len();
+        if len == 0 {
+            return Ok(0..0);
+        }
+        let s = scroll::segment_start(src, off.min(len - 1))?;
+        let e = scroll::next_boundary(src, s)?;
+        Ok(s..e)
     }
 
     fn invalidate_cache_if_needed(&mut self, key: LayoutKey) {
@@ -435,6 +490,7 @@ impl TextView {
         Ok(entry)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn handle_keys(
         &mut self,
         ui: &egui::Ui,
@@ -442,15 +498,33 @@ impl TextView {
         content_w: f32,
         visible_rows: usize,
         composing: bool,
+        sel: &mut Selection,
         notice: &mut Option<&'static str>,
     ) -> Result<(), SourceError> {
         if composing {
             return Ok(());
         }
+        let len = src.len();
         let page = (visible_rows as i64 - 1).max(1);
-        let (mut delta, mut ctrl_home, mut ctrl_end, mut hdelta) = (0i64, false, false, 0.0f32);
+        let (
+            mut delta,
+            mut ctrl_home,
+            mut ctrl_end,
+            mut hdelta,
+            mut select_all,
+            mut shift_held,
+            mut home_line,
+            mut end_line,
+            mut move_char,
+        ) = (0i64, false, false, 0.0f32, false, false, false, false, 0i64);
         ui.input(|i| {
             let cmd = i.modifiers.command;
+            let shift = i.modifiers.shift;
+            shift_held = shift;
+            if cmd && i.key_pressed(Key::A) {
+                select_all = true;
+                return;
+            }
             if i.key_pressed(Key::ArrowDown) {
                 delta += 1;
             }
@@ -463,22 +537,76 @@ impl TextView {
             if i.key_pressed(Key::PageUp) {
                 delta -= page;
             }
-            if cmd && i.key_pressed(Key::Home) {
-                ctrl_home = true;
-            }
-            if cmd && i.key_pressed(Key::End) {
-                ctrl_end = true;
-            }
-            if !self.wrap {
-                if i.key_pressed(Key::ArrowRight) {
-                    hdelta += 40.0;
+            if i.key_pressed(Key::Home) {
+                if cmd {
+                    ctrl_home = true;
+                } else {
+                    home_line = true;
                 }
-                if i.key_pressed(Key::ArrowLeft) {
+            }
+            if i.key_pressed(Key::End) {
+                if cmd {
+                    ctrl_end = true;
+                } else {
+                    end_line = true;
+                }
+            }
+            if i.key_pressed(Key::ArrowRight) {
+                if shift {
+                    move_char += 1;
+                } else if !self.wrap {
+                    hdelta += 40.0;
+                } else {
+                    move_char += 1;
+                }
+            }
+            if i.key_pressed(Key::ArrowLeft) {
+                if shift {
+                    move_char -= 1;
+                } else if !self.wrap {
                     hdelta -= 40.0;
+                } else {
+                    move_char -= 1;
                 }
             }
         });
 
+        if select_all {
+            *sel = Selection::select_all(len);
+            return Ok(());
+        }
+        if move_char != 0 && len > 0 {
+            let next = if move_char > 0 {
+                sel.head.saturating_add(1).min(len)
+            } else {
+                sel.head.saturating_sub(1)
+            };
+            if shift_held {
+                sel.extend_to(next);
+            } else {
+                *sel = Selection::caret(next);
+            }
+        }
+        if home_line && len > 0 {
+            let seg_s = scroll::segment_start(src, sel.head.min(len - 1))?;
+            if shift_held {
+                sel.extend_to(seg_s);
+            } else {
+                *sel = Selection::caret(seg_s);
+            }
+            if !self.wrap {
+                self.hscroll_px = 0.0;
+            }
+        }
+        if end_line && len > 0 {
+            let seg_s = scroll::segment_start(src, sel.head.min(len - 1))?;
+            let seg_e = scroll::next_boundary(src, seg_s)?;
+            if shift_held {
+                sel.extend_to(seg_e);
+            } else {
+                *sel = Selection::caret(seg_e);
+            }
+        }
         if delta != 0 {
             let cur_anchor = self.anchor;
             let mut lay = EguiLayouter {
@@ -493,11 +621,21 @@ impl TextView {
                 lay.view.sub_px = 0.0;
                 lay.view.bump_scroll();
             }
+            if shift_held {
+                sel.extend_to(next);
+            }
         }
-        if ctrl_home && self.anchor != 0 {
-            self.anchor = 0;
-            self.sub_px = 0.0;
-            self.bump_scroll();
+        if ctrl_home {
+            if self.anchor != 0 {
+                self.anchor = 0;
+                self.sub_px = 0.0;
+                self.bump_scroll();
+            }
+            if shift_held {
+                sel.extend_to(0);
+            } else {
+                *sel = Selection::caret(0);
+            }
         }
         if ctrl_end {
             let mut lay = EguiLayouter {
@@ -512,6 +650,11 @@ impl TextView {
                 lay.view.sub_px = 0.0;
                 lay.view.bump_scroll();
             }
+            if shift_held {
+                sel.extend_to(len);
+            } else {
+                *sel = Selection::caret(len);
+            }
         }
         if hdelta != 0.0 && !self.wrap {
             let max_h = (self.max_row_w - content_w).max(0.0);
@@ -524,7 +667,7 @@ impl TextView {
         &mut self,
         ui: &mut egui::Ui,
         cx: &TextViewCtx<'_>,
-        _sel: &mut Selection,
+        sel: &mut Selection,
     ) -> TextViewOutput {
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), Sense::click_and_drag());
         let painter = ui.painter_at(rect);
@@ -604,6 +747,8 @@ impl TextView {
                 ppp,
                 &font,
                 &self.last_good,
+                sel,
+                false,
                 ui,
             );
             return TextViewOutput {
@@ -697,10 +842,17 @@ impl TextView {
             }
         }
 
-        // Keyboard navigation.
+        // Keyboard navigation & selection.
         if read_err.is_none() && focused && !cx.keys_blocked && !ui.ctx().any_popup_open()
-            && let Err(e) =
-                self.handle_keys(ui, cx.source, content_w, visible_rows, composing, &mut notice)
+            && let Err(e) = self.handle_keys(
+                ui,
+                cx.source,
+                content_w,
+                visible_rows,
+                composing,
+                sel,
+                &mut notice,
+            )
         {
             read_err = Some(e);
         }
@@ -722,7 +874,45 @@ impl TextView {
             self.last_good = built;
         }
 
-        // Paint visible rows (or last_good on error).
+        // Mouse click / drag / double-click word / triple-click paragraph selection.
+        if read_err.is_none()
+            && let Some(pos) = response.interact_pointer_pos()
+            && text_rect.contains(pos)
+        {
+            let off = self.handle_click(cx, text_rect, pos);
+            let shift = ui.input(|i| i.modifiers.shift);
+            if response.triple_clicked() {
+                match self.handle_triple_select(cx.source, off) {
+                    Ok(r) => {
+                        sel.anchor = r.start;
+                        sel.head = r.end;
+                        self.increment_scroll_epoch();
+                    }
+                    Err(e) => read_err = Some(e),
+                }
+            } else if response.double_clicked() {
+                match self.handle_word_select(cx.source, off) {
+                    Ok(r) => {
+                        sel.anchor = r.start;
+                        sel.head = r.end;
+                        self.increment_scroll_epoch();
+                    }
+                    Err(e) => read_err = Some(e),
+                }
+            } else if response.drag_started() || response.clicked() {
+                if shift {
+                    sel.extend_to(off);
+                } else {
+                    *sel = Selection::caret(off);
+                }
+                self.increment_scroll_epoch();
+            } else if response.dragged() {
+                sel.extend_to(off);
+                self.increment_scroll_epoch();
+            }
+        }
+
+        // Paint visible rows (or last_good on error) with selection highlights.
         paint_rows(
             &painter,
             rect,
@@ -733,6 +923,8 @@ impl TextView {
             ppp,
             &font,
             &self.last_good,
+            sel,
+            focused,
             ui,
         );
 
@@ -1024,6 +1216,8 @@ fn paint_rows(
     ppp: f32,
     font: &FontId,
     rows: &[VisibleRow],
+    sel: &Selection,
+    focused: bool,
     ui: &egui::Ui,
 ) {
     if line_numbers {
@@ -1037,18 +1231,56 @@ fn paint_rows(
     let text_painter = painter.with_clip_rect(text_rect);
     let gutter_right = rect.left() + gutter_w - GUTTER_RIGHT_PAD;
     let hover_pos = ui.input(|i| i.pointer.hover_pos());
+    let sel_range = sel.range();
+    let sel_fill = if focused {
+        theme::SELECTION
+    } else {
+        theme::SELECTION_INACTIVE
+    };
 
     let mut idx = 0usize;
     while idx < rows.len() {
         let first = &rows[idx];
         let y = snap::row_y(text_rect.top(), idx, theme::ROW_HEIGHT, ppp);
 
-        // Paint gutter marks for each row of this segment currently visible.
+        // Paint gutter marks and per-row selection rects for each visible row of this segment.
         let seg_start_idx = idx;
         let seg_start_row_in_seg = first.row_in_seg;
         while idx < rows.len() && rows[idx].seg.start == first.seg.start {
             let r = &rows[idx];
             let ry = snap::row_y(text_rect.top(), idx, theme::ROW_HEIGHT, ppp);
+            if !sel_range.is_empty()
+                && sel_range.start < r.seg.end
+                && sel_range.end > r.seg.start
+                && let Some(placed) = r.galley.rows.get(r.row_in_seg)
+            {
+                let rel_s = sel_range.start.saturating_sub(r.seg.start) as u32;
+                let rel_e = sel_range.end.min(r.seg.end).saturating_sub(r.seg.start) as u32;
+                let c_start = text::char_for_byte(&r.decoded, rel_s);
+                let c_end = text::char_for_byte(&r.decoded, rel_e);
+                let mut row_first_c = 0usize;
+                for prev in r.galley.rows.iter().take(r.row_in_seg) {
+                    let c: usize = prev.row.char_count_excluding_newline().into();
+                    row_first_c += c;
+                }
+                let row_len: usize = placed.row.char_count_excluding_newline().into();
+                let row_end_c = row_first_c + row_len;
+                let lo = c_start.max(row_first_c).min(row_end_c) - row_first_c;
+                let hi = c_end.max(row_first_c).min(row_end_c) - row_first_c;
+                let x0 = text_rect.left() - hscroll_px + placed.row.x_offset(lo.into());
+                let x1 = if sel_range.end >= r.seg.end && r.row_in_seg + 1 == r.galley.rows.len() {
+                    text_rect.left() - hscroll_px + placed.row.x_offset(hi.into()) + 6.0
+                } else {
+                    text_rect.left() - hscroll_px + placed.row.x_offset(hi.into())
+                };
+                if x1 > x0 {
+                    let srect = Rect::from_min_max(
+                        pos2(x0, ry),
+                        pos2(x1, ry + theme::ROW_HEIGHT),
+                    );
+                    text_painter.rect_filled(srect, 0.0, sel_fill);
+                }
+            }
             if line_numbers {
                 match r.mark {
                     GutterMark::Number(n, ex) => {
@@ -1332,5 +1564,55 @@ mod tests {
             });
             full.textures_delta.clear();
         }
+    }
+
+    #[test]
+    fn word_and_triple_select_and_click_hit_test() {
+        let data = b"hello world_123\nsecond line\n".to_vec();
+        let idx = complete_index(&data);
+        let src = MemSource::new(data);
+        let mut view = TextView::new();
+
+        // Word select on 'w' in "world_123"
+        assert_eq!(view.handle_word_select(&src, 6).unwrap(), 6..15);
+        // Triple-click selects the entire paragraph including '\n'
+        assert_eq!(view.handle_triple_select(&src, 6).unwrap(), 0..16);
+        assert_eq!(view.handle_triple_select(&src, 18).unwrap(), 16..28);
+
+        // Render one frame so last_good is populated, then click hit-test.
+        let ctx = egui::Context::default();
+        let input = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(egui::Pos2::ZERO, vec2(800.0, 600.0))),
+            ..Default::default()
+        };
+        let mut sel = Selection { anchor: 0, head: 5 };
+        let mut full = ctx.run_ui(input, |ui| {
+            let cx = TextViewCtx {
+                source: &src,
+                index: &idx,
+                frozen: false,
+                keys_blocked: false,
+            };
+            let _ = view.show(ui, &cx, &mut sel);
+        });
+        full.textures_delta.clear();
+
+        let cx = TextViewCtx {
+            source: &src,
+            index: &idx,
+            frozen: false,
+            keys_blocked: false,
+        };
+        let text_rect = Rect::from_min_size(pos2(80.0, 0.0), vec2(700.0, 600.0));
+        let b0 = view.handle_click(&cx, text_rect, pos2(80.0, 5.0));
+        assert_eq!(b0, 0);
+        let b_row2 = view.handle_click(&cx, text_rect, pos2(80.0, 25.0));
+        assert_eq!(b_row2, 16);
+        let b_past = view.handle_click(&cx, text_rect, pos2(80.0, 400.0));
+        assert_eq!(b_past, src.len());
+
+        let before = view.scroll_epoch;
+        view.increment_scroll_epoch();
+        assert_eq!(view.scroll_epoch, before + 1);
     }
 }
