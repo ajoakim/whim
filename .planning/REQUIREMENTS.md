@@ -10,7 +10,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Large-File Core (CORE)
 
 - [ ] **CORE-01**: User can open a file of tens of GB and see its first page in under 1 second
-- [ ] **CORE-02**: App never reads a whole file into memory; RAM use grows with edits, not file size
+- [x] **CORE-02**: App never reads a whole file into memory; RAM use grows with edits, not file size
 - [ ] **CORE-03**: User can scroll smoothly through any file, including before line indexing finishes
 - [ ] **CORE-04**: User sees background line-indexing progress in the status bar; line numbers are shown immediately (approximate/estimated while counting) and become exact when it completes
 - [ ] **CORE-05**: User can jump to a line number or a byte offset
@@ -89,7 +89,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **UI-02**: User can choose light or dark theme, or follow the OS
 - [ ] **UI-03**: User can choose editor font and size, and zoom
 - [x] **UI-04**: Text is crisp on HiDPI and mixed-DPI displays
-- [ ] **UI-05**: CJK text renders via font fallback (system or bundled), so IME-typed and opened CJK text is readable
+- [x] **UI-05**: CJK text renders via font fallback (system or bundled), so IME-typed and opened CJK text is readable
 
 ### Performance & Distribution (PERF)
 
@@ -152,7 +152,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EDIT-10 | Phase 2 | Pending |
 | OPEN-02 | Phase 2 | Pending |
 | OPEN-09 | Phase 2 | Pending |
-| CORE-02 | Phase 2 | Pending |
+| CORE-02 | Phase 2 | Complete |
 | CORE-03 | Phase 2 | Pending |
 | CORE-04 | Phase 2 | Pending |
 | CORE-05 | Phase 2 | Pending |
@@ -164,7 +164,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HEX-03 | Phase 2 | Pending |
 | HEX-05 | Phase 2 | Pending |
 | UI-01 | Phase 2 | Pending |
-| UI-05 | Phase 2 | Pending |
+| UI-05 | Phase 2 | Complete |
 | EDIT-01 | Phase 3 | Pending |
 | EDIT-02 | Phase 3 | Pending |
 | EDIT-03 | Phase 3 | Pending |

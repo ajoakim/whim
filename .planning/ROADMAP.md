@@ -66,7 +66,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 02-01-PLAN.md — Foundation: dependency delta, module skeleton, TextSource contract, test utilities, lazy CJK font fallback
+- [x] 02-01-PLAN.md — Foundation: dependency delta, module skeleton, TextSource contract, test utilities, lazy CJK font fallback
 - [ ] 02-02-PLAN.md — D-21 macOS Whim.app xtask + D-18 macOS CI hard gate
 - [ ] 02-03-PLAN.md — Storage: FileSource positional reads + chunk cache + open pipeline (binary/UTF-16/EOL)
 - [ ] 02-04-PLAN.md — Sparse line index with cancellable worker + Ctrl+G grammar/resolve
@@ -165,7 +165,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 (Ph
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Toolkit & Footprint Gate | 5/5 | Complete    | 2026-11-01 |
-| 2. Core Storage & Read-Only Viewers | 0/TBD | Not started | - |
+| 2. Core Storage & Read-Only Viewers | 1/12 | In Progress|  |
 | 3. Editing, Undo & Hex Overwrite | 0/TBD | Not started | - |
 | 4. Safe Save & Recovery | 0/TBD | Not started | - |
 | 5. Encoding, Tabs & File-Change Safety | 0/TBD | Not started | - |
