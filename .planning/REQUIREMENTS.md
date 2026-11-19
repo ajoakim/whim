@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Large-File Core (CORE)
 
-- [ ] **CORE-01**: User can open a file of tens of GB and see its first page in under 1 second
+- [x] **CORE-01**: User can open a file of tens of GB and see its first page in under 1 second
 - [x] **CORE-02**: App never reads a whole file into memory; RAM use grows with edits, not file size
 - [ ] **CORE-03**: User can scroll smoothly through any file, including before line indexing finishes
 - [ ] **CORE-04**: User sees background line-indexing progress in the status bar; line numbers are shown immediately (approximate/estimated while counting) and become exact when it completes
@@ -62,7 +62,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **HEX-02**: User can overwrite individual bytes in the hex view and save
 - [ ] **HEX-03**: User can jump to an offset in hex view
 - [ ] **HEX-04**: Switching between text and hex view keeps the same byte position, and both views share one undo history
-- [ ] **HEX-05**: Binary files open as text, with a banner offering to switch to hex (never auto-switches)
+- [x] **HEX-05**: Binary files open as text, with a banner offering to switch to hex (never auto-switches)
 
 ### Markdown & Highlighting (VIEW)
 
@@ -148,7 +148,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-02 | Phase 1 | Complete |
 | PERF-05 | Phase 1 | Complete |
 | UI-04 | Phase 1 | Complete |
-| CORE-01 | Phase 2 | Pending |
+| CORE-01 | Phase 2 | Complete |
 | EDIT-10 | Phase 2 | Pending |
 | OPEN-02 | Phase 2 | Pending |
 | OPEN-09 | Phase 2 | Pending |
@@ -162,7 +162,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EDIT-06 | Phase 2 | Pending |
 | HEX-01 | Phase 2 | Pending |
 | HEX-03 | Phase 2 | Pending |
-| HEX-05 | Phase 2 | Pending |
+| HEX-05 | Phase 2 | Complete |
 | UI-01 | Phase 2 | Pending |
 | UI-05 | Phase 2 | Complete |
 | EDIT-01 | Phase 3 | Pending |
