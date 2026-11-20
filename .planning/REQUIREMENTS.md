@@ -74,18 +74,18 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Tabs, Session & Opening Files (OPEN)
 
 - [ ] **OPEN-01**: User can have multiple files open in tabs, with dirty indicators and close-without-saving prompts
-- [ ] **OPEN-02**: User can open files by drag & drop onto the window
+- [x] **OPEN-02**: User can open files by drag & drop onto the window
 - [ ] **OPEN-03**: User can open a file from the terminal with `whim <file>`
 - [ ] **OPEN-04**: User can register Whim for "Open with" / file associations on Windows, Linux and macOS
 - [ ] **OPEN-05**: Opening another file while Whim is running adds a tab to the existing window (single instance)
 - [ ] **OPEN-06**: User can reopen recent files from a recent-files list
 - [ ] **OPEN-07**: Last session's tabs (and scroll positions) are restored on launch
 - [ ] **OPEN-08**: User can follow a growing file (tail mode) so new lines appear and auto-scroll
-- [ ] **OPEN-09**: User can open a file via File > Open (Ctrl/Cmd+O) using the native OS file dialog
+- [x] **OPEN-09**: User can open a file via File > Open (Ctrl/Cmd+O) using the native OS file dialog
 
 ### UI & Preferences (UI)
 
-- [ ] **UI-01**: Minimal UI: tabs, editor area, status bar (line:col, byte offset, encoding, EOL, indexing progress), menus for everything else
+- [x] **UI-01**: Minimal UI: tabs, editor area, status bar (line:col, byte offset, encoding, EOL, indexing progress), menus for everything else
 - [ ] **UI-02**: User can choose light or dark theme, or follow the OS
 - [ ] **UI-03**: User can choose editor font and size, and zoom
 - [x] **UI-04**: Text is crisp on HiDPI and mixed-DPI displays
@@ -150,8 +150,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-04 | Phase 1 | Complete |
 | CORE-01 | Phase 2 | Complete |
 | EDIT-10 | Phase 2 | Complete |
-| OPEN-02 | Phase 2 | Pending |
-| OPEN-09 | Phase 2 | Pending |
+| OPEN-02 | Phase 2 | Complete |
+| OPEN-09 | Phase 2 | Complete |
 | CORE-02 | Phase 2 | Complete |
 | CORE-03 | Phase 2 | Complete |
 | CORE-04 | Phase 2 | Complete |
@@ -163,7 +163,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HEX-01 | Phase 2 | Complete |
 | HEX-03 | Phase 2 | Complete |
 | HEX-05 | Phase 2 | Complete |
-| UI-01 | Phase 2 | Pending |
+| UI-01 | Phase 2 | Complete |
 | UI-05 | Phase 2 | Complete |
 | EDIT-01 | Phase 3 | Pending |
 | EDIT-02 | Phase 3 | Pending |
