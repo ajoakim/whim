@@ -37,6 +37,8 @@ MB = MiB (1,048,576 bytes) everywhere in this project.
 | 2026-10-31 | 1 | macOS | GitHub macos-latest (aarch64) | wgpu | wgpu,bundled-mono | 6.6 | 273.9 | 1519.7 | 260.0 | Warm | 90.5 | 0.0 | 20 GiB sparse | ci2-macos-latest-wgpu | CI; NEW metric |
 | 2026-10-31 | 1 | Windows | GitHub windows-latest (llvmpipe) | glow | default | 5.0 | 355.2 | 820.6 | 322.5 | Warm | 81.6 | 0.0 | 20 GiB sparse | ci2-windows-latest-glow | CI software GL (not a NO-GO input); NEW metric |
 | 2026-10-31 | 1 | Windows | GitHub windows-latest (llvmpipe) | wgpu | wgpu,bundled-mono | 9.3 | 494.4 | 924.8 | 465.5 | Warm | 54.2 | 0.0 | 20 GiB sparse | ci2-windows-latest-wgpu | CI software GL; NEW metric |
+| 2026-11-19 | 2 | Windows 11 | Ryzen 9 5950X / Intel Arc B580 | glow | default (bundled-mono) | 5.9 | 351.0 | 559.3 | 334.0 | Warm | 67.8 | 0.0 | 20 GiB sparse | windows-local-glow | Settled min +20..+30 s; peak 101.4 MB; private 62.7 MB (down from 100.5 MB in Phase 1 after removing mmap). Size (5.86 MB), idle footprint (67.8 MB) and idle CPU (0.0%) PASS; warm startup median 351.0 ms exceeds 300 ms gate (+51 ms) |
+| 2026-11-19 | 2 | Windows 11 | Ryzen 9 5950X / Intel Arc B580 | wgpu | wgpu,bundled-mono | 10.1 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | windows-local-wgpu | Size-only check: 10.08 MB (10,566,656 B), +4.21 MB over glow |
 
 ## Size deltas
 

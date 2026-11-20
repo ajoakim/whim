@@ -80,7 +80,6 @@ Plans:
 - [ ] 02-12-PLAN.md — Local measurements, 02-VALIDATION.md, 02-GATE.md, ROADMAP update, commit + push CI
 
 ### Phase 3: Editing, Undo & Hex Overwrite
-### Phase 3: Editing, Undo & Hex Overwrite
 **Goal**: User can edit a file of any size in text or hex, with working selection, clipboard, IME and bounded undo, with memory growing only with edits
 **Depends on**: Phase 2
 **Requirements**: EDIT-01, EDIT-02, EDIT-03, EDIT-04, HEX-02, HEX-04
